@@ -1,0 +1,104 @@
+/* ============================================================
+   vault-viewer design tokens — "cuaderno de operaciones"
+   Light-first paper aesthetic, technical-editorial language.
+   ============================================================ */
+
+:root {
+  /* -- perceptual-ish palette, OKLCH-inspired hex approximations -- */
+  /* light (default): paper + blue-black ink + teal-ink accent */
+  --paper: #faf8f3;
+  --paper-2: #f2eee6;
+  --paper-3: #e9e4d8;
+  --ink: #1d2530;
+  --ink-2: #3c4756;
+  --muted: #636b79;
+  --faint: #98a0ad;
+  --accent: #0d7a5f;        /* verde tinta */
+  --accent-strong: #0a5c48;
+  --accent-soft: #d9ece5;
+  --amber: #9a5b10;         /* avisos / a-mano */
+  --amber-soft: #f6ecd9;
+  --code-bg: #202833;       /* code stays dark in both modes (chalkboard) */
+  --code-ink: #dde5ee;
+  --border: #ddd6c8;
+  --border-2: #cfc7b6;
+  --shadow-1: 0 1px 2px rgba(29, 37, 48, .06), 0 2px 8px rgba(29, 37, 48, .05);
+  --shadow-2: 0 2px 6px rgba(29, 37, 48, .08), 0 12px 32px -12px rgba(29, 37, 48, .18);
+  --grid-line: rgba(29, 37, 48, .05);
+
+  /* type */
+  --f-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
+  --f-text: 'Inter Tight Variable', 'Inter Tight', system-ui, sans-serif;
+  --f-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* fluid type scale (mobile-first) */
+  --fs--1: clamp(.78rem, .74rem + .2vw, .85rem);
+  --fs-0: clamp(.95rem, .9rem + .25vw, 1.05rem);
+  --fs-1: clamp(1.12rem, 1.02rem + .5vw, 1.3rem);
+  --fs-2: clamp(1.35rem, 1.15rem + .9vw, 1.8rem);
+  --fs-3: clamp(1.7rem, 1.4rem + 1.6vw, 2.5rem);
+  --fs-4: clamp(2.1rem, 1.6rem + 2.6vw, 3.4rem);
+  --lh-tight: 1.18;
+  --lh-body: 1.62;
+
+  /* space (4px base) */
+  --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem;
+  --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4rem; --s-9: 6rem;
+
+  /* radii */
+  --r-1: 6px; --r-2: 10px; --r-3: 16px; --r-4: 22px;
+
+  /* motion */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --t-fast: 140ms;
+  --t-med: 300ms;
+
+  --wrap: 68rem;
+  --nav-h: 3.5rem;
+}
+
+[data-theme='dark'] {
+  --paper: #141920;
+  --paper-2: #1a2029;
+  --paper-3: #222a35;
+  --ink: #e9e6dd;
+  --ink-2: #c4c2ba;
+  --muted: #9aa2ad;
+  --faint: #6d7581;
+  --accent: #3ecfa4;
+  --accent-strong: #63e0bd;
+  --accent-soft: #1d3a31;
+  --amber: #e8b45c;
+  --amber-soft: #3a2f1c;
+  --code-bg: #0e1319;
+  --code-ink: #d6dee8;
+  --border: #2a3240;
+  --border-2: #38414f;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 2px 8px rgba(0, 0, 0, .3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, .5), 0 12px 32px -12px rgba(0, 0, 0, .55);
+  --grid-line: rgba(233, 230, 221, .045);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    --paper: #141920;
+    --paper-2: #1a2029;
+    --paper-3: #222a35;
+    --ink: #e9e6dd;
+    --ink-2: #c4c2ba;
+    --muted: #9aa2ad;
+    --faint: #6d7581;
+    --accent: #3ecfa4;
+    --accent-strong: #63e0bd;
+    --accent-soft: #1d3a31;
+    --amber: #e8b45c;
+    --amber-soft: #3a2f1c;
+    --code-bg: #0e1319;
+    --code-ink: #d6dee8;
+    --border: #2a3240;
+    --border-2: #38414f;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, .4), 0 2px 8px rgba(0, 0, 0, .3);
+    --shadow-2: 0 2px 6px rgba(0, 0, 0, .5), 0 12px 32px -12px rgba(0, 0, 0, .55);
+    --grid-line: rgba(233, 230, 221, .045);
+  }
+}

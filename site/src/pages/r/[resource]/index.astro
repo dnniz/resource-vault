@@ -1,0 +1,88 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const resources = await getCollection('resources');
+  return resources.map((r) => ({ params: { resource: r.id }, props: { resource: r } }));
+}
+
+const { resource } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const data = resource.data;
+
+// progress per part (client reads localStorage; server renders neutral)
+---
+<Base title={data.title} description={data.summary}>
+  <article>
+    <header class="course-head wrap">
+      <p class="kicker">{data.type} · {data.language}</p>
+      <h1>{data.title}</h1>
+      <p class="lede">{data.summary}</p>
+      <div class="meta-row">
+        {data.tags.map((t: string) => <span class="pill">#{t}</span>)}
+        {data.parts.filter((p: any) => p.duration).map((p: any) => <span class="pill">{p.duration}</span>)}
+      </div>
+      <p class="source-note">
+        Contenido original de <a href={data.source.url} rel="noopener" target="_blank">{data.source.author}</a>
+        · archivado {data.source.captured} para estudio personal, mejorado en estructura.
+        <a href="#creditos">Créditos completos</a>.
+      </p>
+    </header>
+
+    <div class="wrap">
+      <div class="continue-bar" id="continue-bar" hidden>
+        <p data-continue-text>Continúa donde te quedaste</p>
+        <a class="btn btn--primary continue-link" data-continue-href href="#">Continuar →</a>
+      </div>
+
+      <nav class="module-list" aria-label="Partes del recurso">
+        {data.parts.map((p: any, i: number) => (
+          <a class="module" href={`${base}/r/${data.id}/${p.id}/`} data-part-link={p.id} data-part-kind={p.kind}>
+            <div class="m-body">
+              <h3>{p.title}</h3>
+              {p.kind === 'reference' && <p>Consulta: prompt completo, comandos, checklists</p>}
+            </div>
+            <div class="m-side">
+              <span>{p.duration ?? ''}</span>
+              <span class="state" data-part-state={p.id}>{p.kind === 'slides' ? '0%' : ''}</span>
+            </div>
+          </a>
+        ))}
+      </nav>
+
+      <aside class="part-aside" id="creditos">
+        <h2>Créditos y licencia de uso</h2>
+        <p>{data.source.credits}</p>
+      </aside>
+    </div>
+  </article>
+</Base>
+
+<script define:vars={{ resourceId: data.id }}>
+  // per-module progress from localStorage
+  const done = (part) => localStorage.getItem(`vault:progress:${resourceId}:${part}:done`) === '1';
+  const last = (part) => parseInt(localStorage.getItem(`vault:progress:${resourceId}:${part}`) ?? '0', 10);
+  const partEls = document.querySelectorAll('[data-part-link]');
+  let resumeHref = null;
+  let resumeFirst = null;
+  partEls.forEach((el) => {
+    const id = el.dataset.partLink;
+    if (el.dataset.partKind !== 'slides') return;
+    if (!resumeFirst) resumeFirst = el.getAttribute('href');
+    if (done(id)) {
+      const st = document.querySelector(`[data-part-state="${id}"]`);
+      if (st) { st.textContent = '✓ vista'; st.classList.add('done'); }
+    } else if (last(id) > 0) {
+      const st = document.querySelector(`[data-part-state="${id}"]`);
+      if (st) { st.textContent = 'en curso'; st.classList.add('partial'); }
+      if (!resumeHref) resumeHref = el.getAttribute('href');
+    }
+  });
+  const bar = document.getElementById('continue-bar');
+  if (bar && (resumeHref || resumeFirst) && (resumeHref || partEls.length)) {
+    const href = resumeHref ?? resumeFirst;
+    bar.hidden = false;
+    bar.querySelector('[data-continue-href]').setAttribute('href', href);
+  }
+</script>

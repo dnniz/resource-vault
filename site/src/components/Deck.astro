@@ -1,0 +1,237 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+export interface SlideItem {
+  num: number;
+  kind: string;
+  kicker?: string;
+  title: string;
+  notes: string[];
+  Content: any;
+}
+
+interface Props {
+  slides: SlideItem[];
+  partTitle: string;
+  backHref: string;
+  backLabel: string;
+  resourceId: string;
+  partId: string;
+  total: number;
+}
+
+const { slides, partTitle, backHref, backLabel, resourceId, partId } = Astro.props;
+const total = slides.length;
+---
+<div class="deck" data-resource={resourceId} data-part={partId} data-total={total}>
+  <div class="wrap deck__chrome">
+    <a class="deck__back" href={backHref}>← {backLabel}</a>
+    <span class="pill">{partTitle}</span>
+    <span class="deck__counter" aria-hidden="true"><span data-deck-current>1</span> / {total}</span>
+  </div>
+  <div class="deck__progress" aria-hidden="true"><div class="deck__progress-fill" data-deck-fill></div></div>
+
+  <div class="deck__stage" data-deck-stage>
+    {slides.map((s) => (
+      <section
+        class={`slide slide--${s.kind}`}
+        data-slide={s.num}
+        role="group"
+        aria-roledescription="diapositiva"
+        aria-label={`Diapositiva ${s.num} de ${total}`}
+        aria-hidden={s.num === 1 ? 'false' : 'true'}
+      >
+        {s.kicker && <p class="slide__kicker">{s.kicker}</p>}
+        <div class="slide__body"><s.Content /></div>
+        {s.notes.length > 0 && (
+          <div class="slide__notes">
+            <h3>✎ Notas del instructor</h3>
+            <ul>
+              {s.notes.map((n) => <li>{n}</li>)}
+            </ul>
+          </div>
+        )}
+      </section>
+    ))}
+    <p class="visually-hidden" aria-live="polite" data-deck-live></p>
+  </div>
+
+  <div class="wrap deck__foot">
+    <button class="btn btn--icon" data-deck-prev aria-label="Diapositiva anterior">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="btn btn--icon" data-deck-next aria-label="Diapositiva siguiente">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="btn" data-deck-notes aria-pressed="false">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20l1.2-4.2L16.6 4.4a2 2 0 0 1 2.8 0l.2.2a2 2 0 0 1 0 2.8L8.2 18.8 4 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      Notas
+    </button>
+    <button class="btn" data-deck-grid>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" stroke="currentColor" stroke-width="1.8"/></svg>
+      Índice
+    </button>
+    <span class="deck__hint"><kbd>←</kbd><kbd>→</kbd> navegar · <kbd>N</kbd> notas · <kbd>G</kbd> índice</span>
+  </div>
+
+  <div class="deck__grid" data-deck-overlay role="dialog" aria-modal="true" aria-label="Índice de diapositivas" hidden>
+    <div class="wrap">
+      <h2>Diapositivas · {partTitle}</h2>
+      <div class="deck__grid-list">
+        {slides.map((s) => (
+          <button class="deck__grid-item" data-deck-jump={s.num}>
+            <span class="deck__grid-num">{String(s.num).padStart(2, '0')}</span>
+            <span class="deck__grid-title">{s.title}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  /* notes rendered inside each slide, visible on toggle */
+  .slide__notes {
+    display: none;
+    margin-top: var(--s-5);
+    border-top: 2px dashed var(--amber);
+    padding-top: var(--s-3);
+  }
+  .show-notes .slide__notes { display: block; }
+  .slide__notes h3 {
+    font-family: var(--f-mono); font-size: var(--fs--1);
+    text-transform: uppercase; letter-spacing: .12em; color: var(--amber);
+    margin-bottom: var(--s-2);
+  }
+  .slide__notes ul { padding-left: 1.2em; display: grid; gap: .35em; font-size: var(--fs-0); color: var(--ink-2); }
+</style>
+
+<script>
+  class Deck {
+    root: HTMLElement;
+    stage: HTMLElement;
+    slides: HTMLElement[];
+    current = 1;
+    total: number;
+    key: string;
+    live: HTMLElement | null;
+    fill: HTMLElement | null;
+    counter: HTMLElement | null;
+    overlay: HTMLElement | null;
+
+    constructor(root: HTMLElement) {
+      this.root = root;
+      this.stage = root.querySelector('[data-deck-stage]')!;
+      this.slides = Array.from(root.querySelectorAll('.slide'));
+      this.total = this.slides.length;
+      this.key = `vault:progress:${root.dataset.resource}:${root.dataset.part}`;
+      this.live = root.querySelector('[data-deck-live]');
+      this.fill = root.querySelector('[data-deck-fill]');
+      this.counter = root.querySelector('[data-deck-current]');
+      this.overlay = root.querySelector('[data-deck-overlay]');
+
+      // deep link #N
+      const hash = parseInt(location.hash.slice(1), 10);
+      const saved = parseInt(localStorage.getItem(this.key) ?? '1', 10);
+      const start = hash >= 1 && hash <= this.total ? hash : Math.min(Math.max(saved, 1), this.total);
+
+      this.go(start, true);
+      this.bind();
+    }
+
+    bind() {
+      document.addEventListener('keydown', (e) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'BUTTON' && e.key === 'Enter') return;
+        switch (e.key) {
+          case 'ArrowRight': case 'PageDown': case ' ':
+            e.preventDefault(); this.next(); break;
+          case 'ArrowLeft': case 'PageUp':
+            e.preventDefault(); this.prev(); break;
+          case 'Home': e.preventDefault(); this.go(1); break;
+          case 'End': e.preventDefault(); this.go(this.total); break;
+          case 'n': case 'N':
+            this.root.classList.toggle('show-notes');
+            break;
+          case 'g': case 'G': this.toggleGrid(); break;
+          case 'Escape': this.closeGrid(); break;
+        }
+      });
+
+      this.root.querySelector('[data-deck-prev]')?.addEventListener('click', () => this.prev());
+      this.root.querySelector('[data-deck-next]')?.addEventListener('click', () => this.next());
+      this.root.querySelector('[data-deck-notes]')?.addEventListener('click', (e) => {
+        const btn = e.currentTarget as HTMLElement;
+        const open = this.root.classList.toggle('show-notes');
+        btn.setAttribute('aria-pressed', String(open));
+      });
+      this.root.querySelector('[data-deck-grid]')?.addEventListener('click', () => this.toggleGrid());
+      this.overlay?.querySelectorAll('[data-deck-jump]').forEach((el) => {
+        el.addEventListener('click', () => {
+          this.go(parseInt((el as HTMLElement).dataset.deckJump!, 10));
+          this.closeGrid();
+        });
+      });
+
+      // swipe
+      let startX: number | null = null;
+      this.stage.addEventListener('pointerdown', (e) => { startX = e.clientX; }, { passive: true });
+      this.stage.addEventListener('pointerup', (e) => {
+        if (startX === null) return;
+        const dx = e.clientX - startX;
+        startX = null;
+        if (Math.abs(dx) > 48) (dx < 0 ? this.next() : this.prev());
+      }, { passive: true });
+    }
+
+    go(n: number, initial = false) {
+      this.current = Math.min(Math.max(n, 1), this.total);
+      const active = this.slides[this.current - 1];
+      for (const s of this.slides) {
+        const isActive = s === active;
+        s.classList.toggle('is-active', isActive);
+        s.setAttribute('aria-hidden', String(!isActive));
+      }
+      if (this.fill) this.fill.style.width = `${(this.current / this.total) * 100}%`;
+      if (this.counter) this.counter.textContent = String(this.current);
+      if (this.live) {
+        const kicker = active.querySelector('.slide__kicker')?.textContent ?? '';
+        const firstHead = active.querySelector('h2, h3, p')?.textContent ?? '';
+        this.live.textContent = `Diapositiva ${this.current} de ${this.total}. ${kicker || firstHead}`;
+      }
+      this.overlay?.querySelectorAll('.deck__grid-item').forEach((el) => {
+        el.classList.toggle('is-current', Number((el as HTMLElement).dataset.deckJump) === this.current);
+      });
+      // persist + hash
+      localStorage.setItem(this.key, String(this.current));
+      if (this.current === this.total) {
+        localStorage.setItem(`${this.key}:done`, '1');
+      }
+      if (!initial) history.replaceState(null, '', `#${this.current}`);
+    }
+
+    next() { this.go(this.current + 1); }
+    prev() { this.go(this.current - 1); }
+
+    toggleGrid() {
+      if (!this.overlay) return;
+      const open = this.overlay.hidden;
+      this.overlay.hidden = !open;
+      this.overlay.classList.toggle('is-open', open);
+      if (open) (this.overlay.querySelector('.deck__grid-item.is-current') as HTMLElement | null)?.focus();
+    }
+    closeGrid() {
+      if (!this.overlay || this.overlay.hidden) return;
+      this.overlay.hidden = true;
+      this.overlay.classList.remove('is-open');
+    }
+  }
+
+  const root = document.querySelector('.deck');
+  if (root) new Deck(root as HTMLElement);
+</script>

@@ -1,0 +1,108 @@
+---
+import Base from '../../../../layouts/Base.astro';
+import Deck from '../../../../components/Deck.astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const resources = await getCollection('resources');
+  const parts = await getCollection('parts');
+  const paths: {
+    params: { resource: string; part: string };
+    props: { resource: any; part: CollectionEntry<'parts'>; partMeta: any; index: number };
+  }[] = [];
+  for (const r of resources) {
+    parts
+      .filter((p) => p.id.startsWith(`${r.id}/`))
+      .forEach((p) => {
+        const partId = p.id.split('/')[1];
+        const meta = r.data.parts.find((x: any) => x.id === partId);
+        if (!meta) throw new Error(`part folder "${partId}" of ${r.id} is not listed in resource.yaml parts`);
+        paths.push({
+          params: { resource: r.id, part: partId },
+          props: { resource: r, part: p, partMeta: meta, index: r.data.parts.indexOf(meta) },
+        });
+      });
+  }
+  return paths;
+}
+
+const { resource, part, partMeta, index } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const backHref = `${base}/r/${resource.id}/`;
+const isDeck = partMeta.kind === 'slides';
+
+// ---- deck path: gather slides of this part ----
+let slideItems: any[] = [];
+let partEntry: CollectionEntry<'parts'> = part;
+if (isDeck) {
+  // glob ids look like "<rid>/<pid>/slides/<file>" — filter + sort by filename
+  const mine = (await getCollection('slides'))
+    .filter((s) => s.id.startsWith(`${resource.id}/`) && s.id.split('/')[1] === part.id.split('/')[1])
+    .sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+  slideItems = await Promise.all(
+    mine.map(async (s, idx) => {
+      const { Content } = await render(s);
+      const num = idx + 1; // renumber 1..N within the part (filenames carry global numbers)
+      const heading = s.body?.match(/^##\s+(.+)$/m)?.[1];
+      const firstPara = s.body?.replace(/[#>*`\-\n]/g, ' ').trim().split(/\s+/).slice(0, 8).join(' ');
+      return {
+        num,
+        kind: s.data.kind,
+        kicker: s.data.kicker,
+        title: heading ?? firstPara ?? `Diapositiva ${num}`,
+        notes: s.data.notes,
+        Content,
+      };
+    })
+  );
+} else {
+  // reference / reading
+}
+const { Content: PartContent, headings } = await render(partEntry);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+<Base title={`${partMeta.title} · ${resource.data.title}`} description={partMeta.summary} bare={isDeck}>
+  {isDeck ? (
+    <Deck
+      slides={slideItems}
+      partTitle={partMeta.title}
+      backHref={backHref}
+      backLabel={resource.data.title}
+      resourceId={resource.id}
+      partId={part.id.split('/')[1]}
+      total={slideItems.length}
+    />
+  ) : (
+    <div class="wrap doc-layout">
+      {toc.length > 0 && (
+        <nav class="doc-toc" aria-label="Contenido de esta página">
+          <h2>En esta página</h2>
+          <ol>
+            {toc.map((h) => (
+              <li class={h.depth === 3 ? 'lvl-3' : ''}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+      <article>
+        <header class="doc-head">
+          <p class="kicker">Parte {String(index + 1).padStart(2, '0')} · consulta</p>
+          <h1>{partMeta.title}</h1>
+          {partMeta.duration && <div class="meta-row"><span class="pill">{partMeta.duration}</span></div>}
+        </header>
+        <div class="prose">
+          <PartContent />
+        </div>
+        <aside class="part-aside">
+          <h2>En este recurso</h2>
+          <ul>
+            {(partMeta.objectives ?? []).map((o: string) => <li>{o}</li>)}
+          </ul>
+          <p style="margin-top:.6rem;"><a href={backHref}>← Volver a {resource.data.title}</a></p>
+        </aside>
+      </article>
+    </div>
+  )}
+</Base>
