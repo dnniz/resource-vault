@@ -1,0 +1,40 @@
+schema: vault/v1
+id: el-ultimo-kilometro
+title: "El Último Kilómetro"
+type: course
+language: es
+summary: "Del prompt a la entrega y el cobro: landing con formulario, flujo de n8n, deploy en Vercel y Coolify, y la entrega profesional al cliente. Curso en 5 módulos + kit de consulta."
+tags: [ia, agentes, n8n, deploy, vercel, coolify, freelance]
+source:
+  url: https://clase-ultimo-kilometro.vercel.app/
+  author: "Imperio Agéntico — clase El Último Kilómetro"
+  captured: 2026-10-08
+  credits: >-
+    Contenido original de la clase «El Último Kilómetro» (Imperio Agéntico),
+    archivado con fines de estudio personal y mejorado en estructura y
+    presentación. No es contenido original de este repositorio.
+parts:
+  - id: 01-vision-general
+    title: "Visión general"
+    kind: slides
+    duration: "10 min"
+  - id: 02-el-prompt
+    title: "El prompt que lo hace todo"
+    kind: slides
+    duration: "10 min"
+  - id: 03-n8n
+    title: "n8n sin miedo"
+    kind: slides
+    duration: "12 min"
+  - id: 04-deploy
+    title: "Deploy: Vercel, DNS y Coolify"
+    kind: slides
+    duration: "60 min"
+  - id: 05-entrega-y-cobro
+    title: "Entrega y cobro"
+    kind: slides
+    duration: "25 min"
+  - id: 06-kit
+    title: "El kit: comandos y checklist"
+    kind: reference
+    duration: "consulta"
