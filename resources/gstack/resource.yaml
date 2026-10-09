@@ -1,0 +1,46 @@
+schema: vault/v1
+id: gstack
+title: "gstack: el equipo de ingeniería virtual de Garry Tan"
+type: guide
+language: es
+summary: "Cómo usar gstack, el setup de Claude Code con el que Garry Tan (CEO de YC) embarca: 23 especialistas y 8 herramientas que convierten el sprint Think→Ship en comandos. Escenarios paso a paso, referencia de comandos, prompting y el ethos que hay detrás."
+tags: [ia, claude-code, agentes, workflow, productividad, devtools]
+source:
+  url: https://github.com/garrytan/gstack
+  author: "Garry Tan — garrytan/gstack (MIT)"
+  captured: 2026-10-09
+  credits: >-
+    Guía derivada y ampliada del README, ETHOS.md y docs del repositorio
+    garrytan/gstack (Garry Tan, licencia MIT), archivada con fines de estudio
+    personal y mejorada en estructura y presentación. Los ejemplos, cifras y
+    citas pertenecen al autor original. No es contenido original de este
+    repositorio.
+parts:
+  - id: 01-que-es
+    title: "Qué es gstack"
+    kind: slides
+    duration: "12 min"
+  - id: 02-instalacion
+    title: "Instalación y hosts"
+    kind: reading
+    duration: "15 min"
+  - id: 03-escenarios
+    title: "Escenarios de uso"
+    kind: slides
+    duration: "30 min"
+  - id: 04-comandos
+    title: "Referencia de comandos"
+    kind: reference
+    duration: "consulta"
+  - id: 05-prompting
+    title: "Cómo hablarle: prompting"
+    kind: reference
+    duration: "consulta"
+  - id: 06-etos
+    title: "El ethos del constructor"
+    kind: slides
+    duration: "15 min"
+  - id: 07-kit
+    title: "Kit: checklist y troubleshooting"
+    kind: reference
+    duration: "consulta"
