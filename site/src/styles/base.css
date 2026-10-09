@@ -131,7 +131,8 @@
     position: relative;
     box-shadow: var(--shadow-1);
   }
-  .prose table { border-collapse: collapse; width: 100%; font-size: .92em; }
+  /* tablas anchas: scrollean dentro de sí mismas sin romper la página (móvil) */
+  .prose table { border-collapse: collapse; width: 100%; font-size: .92em; display: block; width: max-content; max-width: 100%; overflow-x: auto; }
   .prose th {
     text-align: left; font-family: var(--f-mono); font-size: var(--fs--1);
     text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
