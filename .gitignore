@@ -5,3 +5,4 @@ dist/
 *.log
 site/dist/
 site/.astro/
+qa-evidence.zip
