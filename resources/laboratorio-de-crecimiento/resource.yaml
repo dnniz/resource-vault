@@ -6,8 +6,8 @@ language: es
 summary: "Cómo pasar de una libreta de leads a un sistema comercial trazable: eventos en vez de estados, listas cerradas, una sola fuente de verdad y un «contexto que viaja» con cada seguimiento. Siete fases de punta a punta con sus campos, KPIs y umbrales, el ciclo semanal del laboratorio de crecimiento (hipótesis, una variable, experimento) y el stack mínimo de datos para arrancar mañana."
 tags: [ventas, growth, crm, pipeline, operaciones, experiments, saas, agency, kpis]
 source:
-  url: https://elcursodelagua.substack.com
-  author: "Libia / AZXION — proceso comercial v2026.05 y SOP Laboratorio de Crecimiento v1.0"
+  url: https://github.com/dnniz/resource-vault/tree/main/resources/laboratorio-de-crecimiento
+  author: "Libia / AZXION — documento interno de uso exclusivo, sin fuente pública"
   captured: 2026-10-12
   credits: >-
     Curso estructurado a partir de dos documentos operativos internos del
