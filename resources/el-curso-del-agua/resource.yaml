@@ -1,0 +1,52 @@
+schema: vault/v1
+id: el-curso-del-agua
+title: "El Curso del Agua: la arquitectura que hace que un agente no invente"
+type: course
+language: es
+summary: "Qué pasa cuando un bot con herramientas contesta un precio inventado, y la solución no es rezarle al prompt: es una arquitectura de cuatro IAs (router, principal, extractor de parámetros y fact-checker) sobre una memoria de resultados. El diario de construcción de Haiku, reorganizado como curso: confiabilidad del agente, detalles de oficio, nichificación por tipo de problema, positioning y un sistema operativo de-fundador."
+tags: [ia, agentes, n8n, arquitectura, prompting, confiabilidad, producto, nichos, ventas, founder]
+source:
+  url: https://elcursodelagua.substack.com
+  author: "Stiven Rosales — newsletter El Curso del Agua"
+  captured: 2026-10-12
+  credits: >-
+    Curso estructurado a partir de 24 entregas semanales de la newsletter «El
+    Curso del Agua» de Stiven Rosales (elcursodelagua.substack.com,
+    dic 2025 – may 2026), archivadas con fines de estudio personal. Las
+    anécdotas técnicas, los nombres del producto (Haiku) y las citas textuales
+    pertenecen al autor original. La reorganización en módulos, los objetivos y
+    el material de referencia son trabajo de esta bóveda. No es contenido
+    original de este repositorio.
+parts:
+  - id: 01-el-bot-que-inventa
+    title: "El bot que inventa"
+    kind: slides
+    duration: "15 min"
+  - id: 02-arquitectura-del-agente
+    title: "La arquitectura del agente que no inventa"
+    kind: slides
+    duration: "30 min"
+  - id: 03-detalles-que-matan-la-confianza
+    title: "Los detalles que matan la confianza"
+    kind: slides
+    duration: "20 min"
+  - id: 04-el-nicho-es-un-problema
+    title: "El nicho no es un sector: es un tipo de problema"
+    kind: slides
+    duration: "15 min"
+  - id: 05-lo-que-cierra
+    title: "Historias, dashboards y lo que de verdad cierra"
+    kind: slides
+    duration: "15 min"
+  - id: 06-operar-el-laboratorio
+    title: "Operar el laboratorio: el sistema del founder"
+    kind: reading
+    duration: "20 min"
+  - id: 07-como-aplicarlo
+    title: "Cómo aplicarlo a tu agente"
+    kind: slides
+    duration: "15 min"
+  - id: 08-kit
+    title: "Kit: prompts, patrones y glosario"
+    kind: reference
+    duration: "consulta"
