@@ -13,6 +13,7 @@ renderiza cualquier recurso que cumpla el esquema sin cambiar código.
 | Recurso | Tipo | Fuente original |
 |---|---|---|
 | [`el-ultimo-kilometro`](resources/el-ultimo-kilometro/) | curso (5 módulos + kit) | [clase-ultimo-kilometro.vercel.app](https://clase-ultimo-kilometro.vercel.app/) |
+| [`gstack`](resources/gstack/) | guía (7 partes: 3 decks + 4 lecturas) | [garrytan/gstack](https://github.com/garrytan/gstack) |
 
 ## Qué aporta esta versión frente al original
 
@@ -37,10 +38,16 @@ npm run preview
 
 ```bash
 cp -r resources/_templates/course-part resources/<nuevo-id>
-# 1. Edita resources/<nuevo-id>/resource.yaml (manifiesto)
+# 1. Edita resources/<nuevo-id>/resource.yaml (manifiesto): ponle `id: <nuevo-id>`
+#    y lista en `parts` una entrada por carpeta de parte (los ids deben coincidir)
 # 2. Crea las partes (carpetas) siguiendo docs/SCHEMA.md
 # 3. npm run build valida el esquema: si compila, cumple el esquema
 ```
+
+El nombre de la carpeta (`<nuevo-id>`) es el `id` del recurso: el build falla si
+no coinciden. `_templates/` está excluido del sitio por el prefijo `_` (el visor
+salta las carpetas así), pero sus `.md` sí pasan por el validador de frontmatter:
+si añades campos que no estén en `docs/SCHEMA.md`, el build rompe a propósito.
 
 Ver guía completa en [`docs/SCHEMA.md`](docs/SCHEMA.md).
 

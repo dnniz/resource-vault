@@ -1,0 +1,29 @@
+# PLANTILLA — manifiesto de recurso. Borra los comentarios al copiar.
+# Reglas del esquema (docs/SCHEMA.md):
+#   - `id` DEBE ser igual al nombre de la carpeta donde copias esta plantilla.
+#   - `parts[].id` DEBE coincidir con el nombre de la carpeta de la parte.
+#   - `source.credits` es OBLIGATORIO si el contenido no es original.
+schema: vault/v1
+id: nuevo-recurso
+title: "Título visible del recurso"
+type: course                     # course | guide | kit | reference
+language: es
+summary: "1-2 frases: qué es y para qué sirve."
+tags: [ia, deploy]
+source:
+  url: https://original.ejemplo/
+  author: "Autor original"
+  captured: 2026-10-08
+  credits: >-
+    Texto de atribución: qué es, de quién es, y con qué fin se archiva aquí.
+    Obligatorio si el contenido no es original de este repositorio.
+parts:
+  - id: 01-introduccion
+    title: "Introducción"
+    kind: slides                 # slides | reading | reference
+    duration: "10 min"
+  # Copia este bloque por cada parte nueva. El orden de `parts` es el orden de lectura.
+  # - id: 02-practica
+  #   title: "Práctica"
+  #   kind: reading
+  #   duration: "45 min"
