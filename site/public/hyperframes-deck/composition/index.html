@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HyperFrames: HTML → video determinista</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --bg: #08090d;
+        --bg-2: #10131c;
+        --surface: #171b26;
+        --surface-2: #1e2433;
+        --line: #2b3244;
+        --ink: #f2f5fb;
+        --ink-2: #aab4c9;
+        --ink-3: #727d96;
+        --accent: #5eead4;
+        --accent-2: #a78bfa;
+        --warn: #fbbf24;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 1920px; height: 1080px; overflow: hidden;
+        background: var(--bg); color: var(--ink);
+        font-family: system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      body { position: relative; }
+
+      /* Escenas: ocultas por defecto. opacity:0 sola no basta —
+         visibility hidden evita que una capa invisible se coma los clicks. */
+      .scene {
+        position: absolute; top: 0; left: 0;
+        width: 1920px; height: 1080px;
+        overflow: hidden;
+        opacity: 0; visibility: hidden; pointer-events: none;
+      }
+      .scene.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+
+      .pad { position: absolute; inset: 0; padding: 96px 132px; }
+      .grid {
+        position: absolute; inset: 0; opacity: .5;
+        background-image:
+          linear-gradient(rgba(94,234,212,.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(94,234,212,.05) 1px, transparent 1px);
+        background-size: 96px 96px;
+      }
+      .glow {
+        position: absolute; width: 1100px; height: 1100px; border-radius: 50%;
+        filter: blur(120px); opacity: .16; pointer-events: none;
+      }
+
+      .kicker {
+        font-family: ui-monospace, monospace;
+        font-size: 40px; letter-spacing: .2em; text-transform: uppercase;
+        color: var(--accent); font-weight: 600;
+      }
+      h1 { font-size: 92px; line-height: 1.04; font-weight: 800; letter-spacing: -.025em; }
+      h2 { font-size: 64px; line-height: 1.12; font-weight: 750; letter-spacing: -.02em; }
+      .lead { font-size: 48px; line-height: 1.34; color: var(--ink-2); font-weight: 400; }
+      .sm { font-size: 42px; line-height: 1.4; color: var(--ink-2); }
+      .mono { font-family: ui-monospace, monospace; }
+      .accent { color: var(--accent); }
+      .accent2 { color: var(--accent-2); }
+      .dim { color: var(--ink-3); }
+
+      .code {
+        font-family: ui-monospace, monospace;
+        font-size: 40px; line-height: 1.5;
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 20px; padding: 40px 44px; color: var(--ink);
+      }
+      .code .c { color: var(--ink-3); }
+      .code .t { color: var(--accent); }
+      .code .a { color: var(--accent-2); }
+
+      .cards { display: flex; gap: 36px; }
+      .card {
+        flex: 1; background: var(--surface); border: 1px solid var(--line);
+        border-radius: 24px; padding: 44px 40px;
+      }
+      .card h3 { font-size: 46px; font-weight: 700; margin-bottom: 16px; }
+      .card p { font-size: 40px; line-height: 1.38; color: var(--ink-2); }
+
+      .rows { display: flex; flex-direction: column; gap: 22px; }
+      .row {
+        display: flex; align-items: baseline; gap: 32px;
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 18px; padding: 30px 40px;
+      }
+      .row .in { font-size: 40px; color: var(--ink-2); width: 720px; flex: none; }
+      .row .ar { font-size: 40px; color: var(--accent); flex: none; }
+      .row .out { font-size: 40px; color: var(--accent-2); font-weight: 600; }
+
+      .warnbox {
+        background: rgba(251,191,36,.08); border: 2px solid var(--warn);
+        border-radius: 24px; padding: 44px 48px;
+      }
+      .warnbox .wt {
+        font-family: ui-monospace, monospace; font-size: 40px;
+        color: var(--warn); letter-spacing: .12em; margin-bottom: 18px;
+      }
+      .warnbox p { font-size: 44px; line-height: 1.36; color: var(--ink); }
+
+      /* Fragmentos: arrancan ocultos; el controlador los revela al cruzar. */
+      .frag { opacity: 0; }
+
+      #progress {
+        position: absolute; left: 132px; bottom: 74px;
+        width: 1656px; height: 8px; border-radius: 99px;
+        background: var(--surface-2); overflow: hidden;
+      }
+      #progress span {
+        display: block; height: 100%; width: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        transform: scaleX(0); transform-origin: 0 50%;
+      }
+      #pct {
+        position: absolute; right: 132px; bottom: 66px;
+        font-family: ui-monospace, monospace; font-size: 40px; color: var(--ink-3);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="application/hyperframes-slideshow+json">
+      {
+        "slides": [
+          { "sceneId": "portada",    "notes": "Abrí con la promesa completa: HTML entra, MP4 sale. Decí que el deck se presenta con P." },
+          { "sceneId": "que-es",     "notes": "Una sola idea: el motor mueve Chrome frame por frame y codifica con FFmpeg. No te disperse en las tres tarjetas." },
+          { "sceneId": "determinismo","notes": "Esta es la razón por la que sirve para CI. Insistí: re-renderizar da el mismo video, byte a byte." },
+          { "sceneId": "instalacion","notes": "Dos comandos. El primero instala el core; el segundo es idempotente. Si vuelve a correr, dice 'already up to date'." },
+          { "sceneId": "contrato",    "notes": "Revelá el bloque de a partes. Énfasis: el timing es declarativo, no JavaScript.", "fragments": [44.4, 45.0] },
+          { "sceneId": "gsap",       "notes": "La regla que más se rompe: la timeline se declara pausada. Si hacés .play(), no hay forma de buscar un frame." },
+          { "sceneId": "routing",     "notes": "El router no adivina: mira qué material le diste y elige. Revelá las filas de a una.", "fragments": [73.4, 74.3, 75.2] },
+          { "sceneId": "mp4-vs-deck", "notes": "La trampa que más caro sale. Dejá la caja amarilla en pantalla. El hotspot abre el catálogo como detalle opcional.",
+            "hotspots": [
+              { "id": "h-catalogo", "label": "Ver el catálogo de bloques", "target": "catalogo", "region": { "x": 55, "y": 62, "w": 42, "h": 22 } }
+            ] },
+          { "sceneId": "anatomia",    "notes": "Dos tiempos: primero la isla, después cómo se presenta. Revelá uno y otro.", "fragments": [105.4, 106.3] },
+          { "sceneId": "validacion",  "notes": "check es el gate. Una isla rota no parsea en el player y el fallo aparece tarde." },
+          { "sceneId": "cierre",      "notes": "Cerrá con la ruta mínima: init, 10 segundos, iterar. No vendas features." }
+        ],
+        "slideSequences": [
+          {
+            "id": "catalogo",
+            "label": "Catálogo y bloques",
+            "slides": [
+              { "sceneId": "catalogo", "notes": "Detalle opcional: hay ~400 bloques en el registro, se instalan por nombre." },
+              { "sceneId": "bloques",  "notes": "La regla operativa: buscar antes de construir a mano." }
+            ]
+          }
+        ]
+      }
+    </script>
+
+    <!-- 1 · PORTADA -->
+    <div id="s-portada" class="scene" data-composition-id="portada"
+         data-start="0" data-duration="9" data-label="Portada"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="glow" style="background:#5eead4; top:-260px; left:-180px"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Curso · HyperFrames 0.8</div>
+        <h1 data-anim style="margin-top:34px; max-width:1560px">
+          Escribís HTML y obtenés un <span class="accent">MP4 determinista</span>
+        </h1>
+        <div id="portada-rule" style="width:520px; height:10px; border-radius:99px; margin-top:46px; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transform:scaleX(0); transform-origin:0 50%"></div>
+        <p class="lead" data-anim style="margin-top:40px; max-width:1320px">
+          Composición → preview → render. Sin React, sin build step, sin fees por render.
+        </p>
+        <div class="mono dim" data-anim style="margin-top:64px; font-size:40px">
+          12 slides · 1 rama · navegá con ← →
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 · QUÉ ES -->
+    <div id="s-que-es" class="scene" data-composition-id="que-es"
+         data-start="9" data-duration="10" data-label="Qué es"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Qué es</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          El motor conduce Chrome headless <span class="accent">frame por frame</span> y codifica con FFmpeg
+        </h2>
+        <div class="cards" data-anim style="margin-top:64px">
+          <div class="card">
+            <h3 class="accent">HTML editable</h3>
+            <p>La composición sigue siendo un archivo que abrís en el navegador y en tus herramientas.</p>
+          </div>
+          <div class="card">
+            <h3 class="accent2">Determinista</h3>
+            <p>Misma entrada, mismos frames. Pensado para CI y tests de regresión.</p>
+          </div>
+          <div class="card">
+            <h3>Sin build</h3>
+            <p>Un <span class="mono">index.html</span> se previsualiza tal cual, sin compilar nada.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 · DETERMINISMO -->
+    <div id="s-determinismo" class="scene" data-composition-id="determinismo"
+         data-start="19" data-duration="10" data-label="Determinismo"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>La propiedad clave</div>
+        <h2 data-anim style="margin-top:30px; max-width:1620px">
+          La misma entrada produce los mismos frames, <span class="accent">siempre</span>
+        </h2>
+        <div class="code" data-anim style="margin-top:56px">
+          <span class="c"># render 1</span> → 300 frames · <span class="t">sha256 a3f1…9c2e</span><br />
+          <span class="c"># render 2</span> → 300 frames · <span class="t">sha256 a3f1…9c2e</span><br />
+          <span class="a">✓ idénticos</span>
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
+          Por eso sirve para automatizar. Un video generado por IA cambia en cada corrida; este no.
+        </p>
+      </div>
+    </div>
+
+    <!-- 4 · INSTALACIÓN -->
+    <div id="s-instalacion" class="scene" data-composition-id="instalacion"
+         data-start="29" data-duration="12" data-label="Instalación"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="glow" style="background:#a78bfa; bottom:-320px; right:-240px"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Instalación</div>
+        <h2 data-anim style="margin-top:30px; max-width:1560px">
+          Dos comandos y 10 skills: eso es todo el setup
+        </h2>
+        <div class="code" data-anim style="margin-top:52px">
+          <span class="c"># instala o refresca el core set</span><br />
+          <span class="t">npx hyperframes skills update</span><br /><br />
+          <span class="c"># idempotente: repetirlo no rompe nada</span><br />
+          <span class="t">npx hyperframes skills update</span> <span class="a">→ already up to date</span>
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
+          El router instala los workflows bajo demanda con <span class="mono">skills update &lt;nombre&gt;</span>.
+        </p>
+      </div>
+    </div>
+
+    <!-- 5 · CONTRATO (2 fragmentos) -->
+    <div id="s-contrato" class="scene" data-composition-id="contrato"
+         data-start="41" data-duration="16" data-label="El contrato"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>El contrato de composición</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          El timing vive en atributos <span class="accent">data-*</span>, no en JavaScript
+        </h2>
+        <div class="code" data-anim style="margin-top:48px">
+          &lt;div <span class="t">data-composition-id</span>="intro"<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="t">data-start</span>="0" <span class="t">data-duration</span>="6"
+          <span class="t">data-width</span>="1920" <span class="t">data-height</span>="1080"&gt;
+        </div>
+        <div class="code frag" id="f-contrato-1" style="margin-top:28px">
+          &lt;h1 <span class="a">class</span>="clip" <span class="t">data-track-index</span>="1"<br />
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="t">data-start</span>="1" <span class="t">data-duration</span>="4"&gt;Lanzamiento&lt;/h1&gt;
+        </div>
+        <p class="sm frag" id="f-contrato-2" style="margin-top:34px">
+          <span class="mono accent">class="clip"</span> es lo que el motor pone y quita de la timeline.
+        </p>
+      </div>
+    </div>
+
+    <!-- 6 · GSAP -->
+    <div id="s-gsap" class="scene" data-composition-id="gsap"
+         data-start="57" data-duration="13" data-label="Animación"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Animación</div>
+        <h2 data-anim style="margin-top:30px; max-width:1620px">
+          Las animaciones deben ser <span class="accent2">seekable</span>: timeline pausada
+        </h2>
+        <div class="code" data-anim style="margin-top:52px">
+          <span class="t">const</span> tl = gsap.timeline({ <span class="a">paused</span>: <span class="t">true</span> });<br />
+          tl.from(<span class="a">"#title"</span>, { opacity: 0, y: 40, duration: 0.8 }, <span class="t">1</span>);<br />
+          window.__timelines[<span class="a">"intro"</span>] = tl;
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1460px">
+          Si hacés <span class="mono">.play()</span>, el motor no tiene forma de buscar el frame 143.
+        </p>
+      </div>
+    </div>
+
+    <!-- 7 · ROUTING (3 fragmentos) -->
+    <div id="s-routing" class="scene" data-composition-id="routing"
+         data-start="70" data-duration="16" data-label="Routing"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Routing</div>
+        <h2 data-anim style="margin-top:30px; max-width:1620px">
+          El router elige el workflow según el material que le des
+        </h2>
+        <div class="rows" style="margin-top:48px">
+          <div class="row" data-anim>
+            <span class="in">URL de producto</span><span class="ar">→</span><span class="out">product-launch-video</span>
+          </div>
+          <div class="row frag" id="f-routing-1">
+            <span class="in">Pull request</span><span class="ar">→</span><span class="out">pr-to-video</span>
+          </div>
+          <div class="row frag" id="f-routing-2">
+            <span class="in">Footage de entrevista</span><span class="ar">→</span><span class="out">embedded-captions</span>
+          </div>
+          <div class="row frag" id="f-routing-3">
+            <span class="in">Cualquier otra cosa</span><span class="ar">→</span><span class="out">general-video</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 · MP4 vs DECK (hotspot a la rama) -->
+    <div id="s-mp4-vs-deck" class="scene" data-composition-id="mp4-vs-deck"
+         data-start="86" data-duration="16" data-label="MP4 vs deck"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>La trampa</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          Un slideshow <span style="color:var(--warn)">no</span> se renderiza a MP4: se presenta vivo
+        </h2>
+        <div class="warnbox" data-anim style="margin-top:52px">
+          <div class="wt">⚠ ADVERTENCIA</div>
+          <p>
+            <span class="mono">render</span> resuelve solo la <strong>primera</strong> composición y escribe un MP4
+            <strong>truncado sin avisar</strong>. Te podés llevar 6 segundos de un deck de 40.
+          </p>
+        </div>
+        <p class="sm" data-anim style="margin-top:44px">
+          La salida correcta es <span class="mono accent">npx hyperframes present</span>.
+          ¿Querés ver el catálogo? Tocá el hotspot.
+        </p>
+      </div>
+    </div>
+
+    <!-- 9 · ANATOMÍA (2 fragmentos) -->
+    <div id="s-anatomia" class="scene" data-composition-id="anatomia"
+         data-start="102" data-duration="18" data-label="Anatomía del deck"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Anatomía de un deck</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          Una isla JSON declara slides, reveals, ramas y notas
+        </h2>
+        <div class="code" data-anim style="margin-top:48px">
+          &lt;script <span class="a">type</span>="application/hyperframes-slideshow+json"&gt;<br />
+          &nbsp;&nbsp;{ "slides": [ { "sceneId": <span class="t">"portada"</span>, "notes": <span class="t">"…"</span> } ],<br />
+          &nbsp;&nbsp;&nbsp;"slideSequences": [ … ] }<br />
+          &lt;/script&gt;
+        </div>
+        <p class="sm frag" id="f-anatomia-1" style="margin-top:40px">
+          <span class="mono accent">notes</span> las ve el presentador. Nunca aparecen en la audiencia.
+        </p>
+        <p class="sm frag" id="f-anatomia-2" style="margin-top:24px">
+          Se presenta con <span class="mono accent">npx hyperframes present</span>. La tecla <span class="mono">P</span> abre el modo presentador.
+        </p>
+      </div>
+    </div>
+
+    <!-- 10 · VALIDACIÓN -->
+    <div id="s-validacion" class="scene" data-composition-id="validacion"
+         data-start="120" data-duration="12" data-label="Validación"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Validación</div>
+        <h2 data-anim style="margin-top:30px; max-width:1560px">
+          <span class="mono accent">check</span> antes de render: el lint atrapa islas rotas
+        </h2>
+        <div class="cards" data-anim style="margin-top:56px">
+          <div class="card">
+            <h3>01</h3>
+            <p>Cada <span class="mono">sceneId</span> resuelve a una escena real.</p>
+          </div>
+          <div class="card">
+            <h3>02</h3>
+            <p>Cada <span class="mono">hotspot.target</span> apunta a una secuencia definida.</p>
+          </div>
+          <div class="card">
+            <h3>03</h3>
+            <p>Los fragmentos caen dentro del rango del slide.</p>
+          </div>
+          <div class="card">
+            <h3>04</h3>
+            <p>Ningún slide principal se solapa en el tiempo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11 · CIERRE -->
+    <div id="s-cierre" class="scene" data-composition-id="cierre"
+         data-start="132" data-duration="12" data-label="Cierre"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="glow" style="background:#5eead4; top:-200px; right:-200px"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Empezá</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          Pedile <span class="accent">10 segundos</span>. Después iterá.
+        </h2>
+        <div class="code" data-anim style="margin-top:52px; max-width:1360px">
+          <span class="t">npx hyperframes init</span> mi-video<br />
+          <span class="c">#Usando /hyperframes, hacé un intro de 10s</span>
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1400px">
+          Un primer video corto revela más que toda esta presentación.
+        </p>
+      </div>
+    </div>
+
+    <!-- RAMA · B1 catálogo -->
+    <div id="s-catalogo" class="scene" data-composition-id="catalogo"
+         data-start="144" data-duration="12" data-label="Catálogo"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="glow" style="background:#a78bfa; bottom:-280px; left:-160px"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Rama · catálogo</div>
+        <h2 data-anim style="margin-top:30px; max-width:1600px">
+          Hay unos <span class="accent2">400 bloques</span> listos para instalar por nombre
+        </h2>
+        <div class="code" data-anim style="margin-top:52px">
+          <span class="c"># buscar primero, construir a mano después</span><br />
+          <span class="t">npx hyperframes catalog --query</span> <span class="a">"terminal"</span> --json<br />
+          <span class="t">npx hyperframes add</span> code-terminal-run
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
+          La búsqueda funciona sin proyecto, sin cuenta y sin instalar nada.
+        </p>
+      </div>
+    </div>
+
+    <!-- RAMA · B2 bloques -->
+    <div id="s-bloques" class="scene" data-composition-id="bloques"
+         data-start="156" data-duration="12" data-label="Regla de bloques"
+         data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Rama · regla operativa</div>
+        <h2 data-anim style="margin-top:30px; max-width:1620px">
+          Antes de dibujar cualquier visual nombrado, <span class="accent">buscalo</span>
+        </h2>
+        <div class="rows" style="margin-top:48px">
+          <div class="row" data-anim>
+            <span class="in">data-chart · animated-bar-chart</span><span class="ar">→</span><span class="out">gráficos</span>
+          </div>
+          <div class="row" data-anim>
+            <span class="in">terminal-simulator · code-typing</span><span class="ar">→</span><span class="out">código</span>
+          </div>
+          <div class="row" data-anim>
+            <span class="in">titlecard-calm · canopy-part-title</span><span class="ar">→</span><span class="out">títulos</span>
+          </div>
+        </div>
+        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
+          Un bloque real le gana siempre a la aproximación hecha a mano.
+        </p>
+      </div>
+    </div>
+
+    <div id="progress"><span></span></div>
+    <div id="pct">00 / 13</div>
+
+    <script>
+      (function () {
+        window.__timelines = window.__timelines || {};
+
+        // Root timeline: fija el rango seekeable y aporta movimiento real
+        // (la barra de progreso), así el lint no marca "nada se movió".
+        // Se registra bajo un data-composition-id existente a propósito: el
+        // contrato de slideshow prohíbe una composición master-root, porque
+        // `render` la resolvería y emitiría el deck entero en lineal.
+        var TOTAL = 168;
+        var root = gsap.timeline({ paused: true });
+        root.fromTo("#progress span", { scaleX: 0 }, { scaleX: 1, duration: TOTAL, ease: "none" }, 0);
+        // Movimiento seekable dentro de la portada: termina antes del frame de
+        // descanso (t=4.5), así el sweep del lint ve cambio real bajo seek.
+        root.fromTo("#portada-rule", { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: "power2.out" }, 0.4);
+        window.__timelines["portada"] = root;
+      })();
+    </script>
+
+    <script>
+      (function () {
+        var SCENES = [
+          { id: "s-portada",     cid: "portada",     start: 0,   end: 9   },
+          { id: "s-que-es",      cid: "que-es",      start: 9,   end: 19  },
+          { id: "s-determinismo",cid: "determinismo",start: 19,  end: 29  },
+          { id: "s-instalacion", cid: "instalacion", start: 29,  end: 41  },
+          { id: "s-contrato",    cid: "contrato",    start: 41,  end: 57  },
+          { id: "s-gsap",        cid: "gsap",        start: 57,  end: 70  },
+          { id: "s-routing",     cid: "routing",     start: 70,  end: 86  },
+          { id: "s-mp4-vs-deck", cid: "mp4-vs-deck", start: 86,  end: 102 },
+          { id: "s-anatomia",    cid: "anatomia",    start: 102, end: 120 },
+          { id: "s-validacion",  cid: "validacion",  start: 120, end: 132 },
+          { id: "s-cierre",      cid: "cierre",      start: 132, end: 144 },
+          { id: "s-catalogo",    cid: "catalogo",    start: 144, end: 156 },
+          { id: "s-bloques",     cid: "bloques",     start: 156, end: 168 }
+        ];
+
+        // Fragmentos: tiempos absolutos del timeline de composición.
+        var FRAGMENTS = [
+          { time: 44.4, id: "f-contrato-1" },
+          { time: 45.0, id: "f-contrato-2" },
+          { time: 73.4, id: "f-routing-1" },
+          { time: 74.3, id: "f-routing-2" },
+          { time: 75.2, id: "f-routing-3" },
+          { time: 105.4, id: "f-anatomia-1" },
+          { time: 106.3, id: "f-anatomia-2" }
+        ];
+
+        var lastActive = null;
+
+        function fireEntrance(sceneEl) {
+          var els = sceneEl.querySelectorAll("[data-anim]");
+          if (!els.length) return;
+          gsap.from(els, {
+            opacity: 0, y: 26, duration: 0.42, stagger: 0.06,
+            ease: "power2.out", overwrite: true
+          });
+        }
+
+        function reveal(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          gsap.fromTo(el,
+            { opacity: 0, x: -22 },
+            { opacity: 1, x: 0, duration: 0.34, ease: "power2.out", overwrite: true });
+        }
+
+        function sceneAt(t) {
+          for (var i = 0; i < SCENES.length; i++) {
+            if (t >= SCENES[i].start && t < SCENES[i].end) return SCENES[i];
+          }
+          return SCENES[0];
+        }
+
+        function ownerSceneOf(fragId) {
+          for (var i = 0; i < SCENES.length; i++) {
+            if (document.getElementById(fragId) &&
+                document.getElementById(fragId).closest(".scene") === document.getElementById(SCENES[i].id)) {
+              return SCENES[i];
+            }
+          }
+          return null;
+        }
+
+        function updateVisibility(t) {
+          var active = sceneAt(t);
+          var pct = Math.min(100, Math.round((t / 168) * 100));
+          var el = document.getElementById("pct");
+          if (el) el.textContent = (t < 168 ? Math.floor(t) : 168) + "s · " + pct + "%";
+
+          for (var i = 0; i < SCENES.length; i++) {
+            var s = SCENES[i];
+            var node = document.getElementById(s.id);
+            if (!node) continue;
+            var on = s.id === active.id;
+            node.classList.toggle("is-active", on);
+            node.style.opacity = on ? "1" : "0";
+            node.style.visibility = on ? "visible" : "hidden";
+            node.style.pointerEvents = on ? "auto" : "none";
+
+            // Al salir de una escena con fragmentos, se reinician para
+            // que al volver el deck muestre el estado inicial.
+            if (!on && lastActive === s.id) {
+              for (var f = 0; f < FRAGMENTS.length; f++) {
+                if (ownerSceneOf(FRAGMENTS[f].id) === s) {
+                  var fe = document.getElementById(FRAGMENTS[f].id);
+                  if (fe) { fe.dataset.shown = "0"; gsap.set(fe, { opacity: 0, x: 0 }); }
+                }
+              }
+            }
+          }
+
+          // Revelado por cruce del playhead (sin engine no hay tweens seek).
+          for (var j = 0; j < FRAGMENTS.length; j++) {
+            var fr = FRAGMENTS[j];
+            if (t >= fr.time) {
+              var node2 = document.getElementById(fr.id);
+              if (node2 && node2.dataset.shown !== "1") {
+                node2.dataset.shown = "1";
+                reveal(fr.id);
+              }
+            }
+          }
+
+          if (active.id !== lastActive) {
+            var activeNode = document.getElementById(active.id);
+            if (activeNode) fireEntrance(activeNode);
+            lastActive = active.id;
+          }
+        }
+
+        window.__hfSetTime = updateVisibility;
+        updateVisibility(0);
+
+        var root = window.__timelines && window.__timelines["portada"];
+        if (root) {
+          root.eventCallback("onUpdate", function () { updateVisibility(root.time()); });
+        }
+      })();
+    </script>
+
+    <script>
+      // El componente slideshow necesita el rango de cada escena para poder
+      // saltar a ella. Sin engine hay que postearlo a mano —TODAS, incluida
+      // la rama, o el hotspot entra a una slide en blanco.
+      (function () {
+        var FPS = 30;
+        var scenes = [
+          { id: "portada",     start: 0,   duration: 9  },
+          { id: "que-es",      start: 9,   duration: 10 },
+          { id: "determinismo",start: 19,  duration: 10 },
+          { id: "instalacion", start: 29,  duration: 12 },
+          { id: "contrato",    start: 41,  duration: 16 },
+          { id: "gsap",        start: 57,  duration: 13 },
+          { id: "routing",     start: 70,  duration: 16 },
+          { id: "mp4-vs-deck", start: 86,  duration: 16 },
+          { id: "anatomia",    start: 102, duration: 18 },
+          { id: "validacion",  start: 120, duration: 12 },
+          { id: "cierre",      start: 132, duration: 12 },
+          { id: "catalogo",    start: 144, duration: 12 },
+          { id: "bloques",     start: 156, duration: 12 }
+        ];
+        function post() {
+          try {
+            parent.postMessage({
+              source: "hf-preview",
+              type: "timeline",
+              durationInFrames: 168 * FPS,
+              scenes: scenes
+            }, "*");
+          } catch (e) {}
+        }
+        if (document.readyState === "complete") setTimeout(post, 300);
+        else window.addEventListener("load", function () { setTimeout(post, 300); });
+      })();
+    </script>
+  </body>
+</html>

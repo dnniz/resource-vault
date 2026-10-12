@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HyperFrames: HTML → video determinista</title>
+
+    <script src="./vendor/hyperframes-player.global.js"></script>
+    <script src="./vendor/hyperframes-slideshow.global.js"></script>
+
+    <style>
+      *,
+      *::before,
+      *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #08090d; }
+    </style>
+  </head>
+  <body>
+    <!--
+      tabindex="0" es obligatorio: <hyperframes-slideshow> escucha keydown
+      (← / →, Espacio, Retroceso, P) sobre sí mismo. Sin focus, las flechas
+      mueren y el deck no se puede navegar.
+    -->
+    <hyperframes-slideshow
+      tabindex="0"
+      notes-storage-key="curso-hyperframes-v1"
+      style="display: block; position: relative; width: 100vw; height: 100vh"
+    >
+      <hyperframes-player
+        interactive
+        style="position: absolute; inset: 0"
+        src="composition/index.html"
+      ></hyperframes-player>
+
+      <!--
+        ISLA DUPLICADA — el componente lee desde su propio innerHTML, no desde
+        la composición que carga el player. Cada cambio en slides/fragments/
+        hotspots/sequences hay que replicarlo acá.
+      -->
+      <script type="application/hyperframes-slideshow+json">
+        {
+          "slides": [
+            { "sceneId": "portada",    "notes": "Abrí con la promesa completa: HTML entra, MP4 sale. Decí que el deck se presenta con P." },
+            { "sceneId": "que-es",     "notes": "Una sola idea: el motor mueve Chrome frame por frame y codifica con FFmpeg. No te disperse en las tres tarjetas." },
+            { "sceneId": "determinismo","notes": "Esta es la razón por la que sirve para CI. Insistí: re-renderizar da el mismo video, byte a byte." },
+            { "sceneId": "instalacion","notes": "Dos comandos. El primero instala el core; el segundo es idempotente. Si vuelve a correr, dice 'already up to date'." },
+            { "sceneId": "contrato",    "notes": "Revelá el bloque de a partes. Énfasis: el timing es declarativo, no JavaScript.", "fragments": [44.4, 45.0] },
+            { "sceneId": "gsap",       "notes": "La regla que más se rompe: la timeline se declara pausada. Si hacés .play(), no hay forma de buscar un frame." },
+            { "sceneId": "routing",     "notes": "El router no adivina: mira qué material le diste y elige. Revelá las filas de a una.", "fragments": [73.4, 74.3, 75.2] },
+            {
+              "sceneId": "mp4-vs-deck",
+              "notes": "La trampa que más caro sale. Dejá la caja amarilla en pantalla. El hotspot abre el catálogo como detalle opcional.",
+              "hotspots": [
+                {
+                  "id": "h-catalogo",
+                  "label": "Ver el catálogo de bloques",
+                  "target": "catalogo",
+                  "region": { "x": 55, "y": 62, "w": 42, "h": 22 }
+                }
+              ]
+            },
+            { "sceneId": "anatomia",    "notes": "Dos tiempos: primero la isla, después cómo se presenta. Revelá uno y otro.", "fragments": [105.4, 106.3] },
+            { "sceneId": "validacion",  "notes": "check es el gate. Una isla rota no parsea en el player y el fallo aparece tarde." },
+            { "sceneId": "cierre",      "notes": "Cerrá con la ruta mínima: init, 10 segundos, iterar. No vendas features." }
+          ],
+          "slideSequences": [
+            {
+              "id": "catalogo",
+              "label": "Catálogo y bloques",
+              "slides": [
+                { "sceneId": "catalogo", "notes": "Detalle opcional: hay ~400 bloques en el registro, se instalan por nombre." },
+                { "sceneId": "bloques",  "notes": "La regla operativa: buscar antes de construir a mano." }
+              ]
+            }
+          ]
+        }
+      </script>
+    </hyperframes-slideshow>
+    <!-- El ícono de Present lo renderiza el propio componente. No lo agregues aparte. -->
+  </body>
+</html>

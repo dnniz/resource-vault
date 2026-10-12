@@ -1,0 +1,36 @@
+schema: vault/v1
+id: hyperframes
+title: "HyperFrames: de HTML a video determinista"
+type: course
+language: es
+summary: "Curso de uso de HyperFrames: escribís una composición HTML y obtenés un MP4 determinista —o lo servís como un deck navegable en vivo, con reveals, ramas y modo presentador."
+tags: [video, agentes, html, automatizacion, hyperframes]
+source:
+  url: https://hyperframes.heygen.com/introduction
+  author: "HeyGen"
+  captured: 2026-10-12
+  credits: >-
+    Curso redactado en este repositorio a partir de la documentación pública de
+    HyperFrames (heygen-com/hyperframes, Apache-2.0) y de la verificación local
+    del CLI 0.8.149. No es contenido original de ese proyecto.
+parts:
+  - id: 01-que-es
+    title: "Qué es y por qué importa"
+    kind: reading
+    duration: "10 min"
+  - id: 02-instalacion
+    title: "Instalación y CLI"
+    kind: reading
+    duration: "10 min"
+  - id: 03-composicion
+    title: "La composición y la animación"
+    kind: slides
+    duration: "15 min"
+  - id: 04-decks
+    title: "Decks navegables en vivo"
+    kind: slides
+    duration: "15 min"
+  - id: 05-kit
+    title: "Kit de referencia"
+    kind: reference
+    duration: "consulta"
