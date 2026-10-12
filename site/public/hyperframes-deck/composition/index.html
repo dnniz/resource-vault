@@ -106,17 +106,18 @@
           { "sceneId": "ej-chart", "notes": "Ahi esta el componente renderizado, no descrito. Fijate que el dato reemplaza a la afirmacion.", "fragments": [74.5] },
           { "sceneId": "ej-terminal", "notes": "Cuando la slide muestra codigo, no lo escribas: terminalizalo. El bloque es determinista." },
           { "sceneId": "ej-mockup", "notes": "Mostrar la interfaz real dentro de un marco de navegador. Ojo con el crop: contain, no cover, si hay texto.", "fragments": [102.5] },
+          { "sceneId": "ej-proceso", "notes": "Ningun bloque del catalogo representa un agente que triagea correo, asi que el proceso va dibujado a mano. Es el caso 01 de la rama: tu propio diagrama.", "fragments": [110.5] },
           { "sceneId": "ej-destacado", "notes": "Este es el reemplazo correcto de la animacion decorativa: el texto ya esta, una palabra se enciende." },
           { "sceneId": "esqueleto", "notes": "El motor de las partes 3 y 4 del curso. Seis partes, cinco slots por elemento." },
           { "sceneId": "deck-o-video", "notes": "La decision previa. Si lo mira alguien sin que estes, es video. Si tenes que argumentar, es deck." },
-          { "sceneId": "arquitectura", "notes": "Solo para los curiosos. Seek-safe es la columna vertebral: el motor no reproduce la linea de tiempo, la posiciona.", "fragments": [152.5] },
-          { "sceneId": "cierre", "notes": "Cerrá con la regla, no con features. 22 prompts copiables en las partes 3 y 4." }
+          { "sceneId": "arquitectura", "notes": "Solo para los curiosos. Seek-safe es la columna vertebral: el motor no reproduce la linea de tiempo, la posiciona.", "fragments": [165.5] },
+          { "sceneId": "cierre", "notes": "Cerrá con la regla, no con features. 22 prompts copiables en las partes 3 y 4; comandos verificados en la 8 y tres sistemas reales en la 9." }
         ],
         "slideSequences": [
           { "id": "inventario", "label": "Inventario del catálogo",
             "slides": [
               { "sceneId": "inv-1", "notes": "Los nombres exactos importan: nombrar el bloque en el prompt fija la tecnica." },
-              { "sceneId": "inv-2", "notes": "Cuando construir a mano: diagramas propios, replicaciones de referencia, tipografia muy particular.", "fragments": [190.5] }
+              { "sceneId": "inv-2", "notes": "Cuando construir a mano: diagramas propios, replicaciones de referencia, tipografia muy particular.", "fragments": [203.5] }
             ] }
         ]
       }
@@ -138,7 +139,7 @@
           afirmación por una evidencia</strong>. Con componentes reales, no con animación de adorno.
         </p>
         <div class="mono dim" data-anim style="margin-top:56px; font-size:40px">
-          14 slides · 2 de componentes renderizados · 1 rama · navegá con ← →
+          15 slides · 5 de componentes renderizados · 1 rama · navegá con ← →
         </div>
       </div>
     </div>
@@ -368,12 +369,114 @@
       </div>
     </div>
 
-    <!-- 10 · COMPONENTE: ÉNFASIS -->
-    <div id="s-mark" class="scene" data-composition-id="ej-destacado" data-start="105" data-duration="13"
+    <!-- 10 · COMPONENTE: PROCESO (SVG + GSAP a mano) -->
+    <div id="s-proceso" class="scene" data-composition-id="ej-proceso" data-start="105" data-duration="13"
+         data-label="Ejemplo: proceso" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column">
+        <div class="kicker" data-anim>Ejemplo 4 · svg + gsap a mano</div>
+        <h2 data-anim style="margin-top:22px; max-width:1560px">Si la slide describe un proceso, animá el proceso</h2>
+        <div id="proc-stage" style="margin-top:22px; width:1664px; height:560px; background:var(--surface);
+             border:1px solid var(--line); border-radius:22px">
+          <svg id="proc-svg" viewBox="0 0 1664 560" width="100%" height="100%" role="img"
+               aria-label="Un sobre entra, un agente lo escanea, lo enriquece con etiquetas y lo archiva en una bandeja">
+            <defs>
+              <linearGradient id="proc-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#5eead4" />
+                <stop offset="1" stop-color="#a78bfa" />
+              </linearGradient>
+            </defs>
+
+            <!-- carril: entrada → bandeja -->
+            <line x1="484" y1="272" x2="1160" y2="272" stroke="#272d3d" stroke-width="4" />
+
+            <!-- bandeja de entrada -->
+            <rect id="proc-inbox" x="96" y="150" width="388" height="244" rx="22"
+                  fill="#1d2230" stroke="#272d3d" stroke-width="4" />
+            <text x="290" y="132" text-anchor="middle" font-size="40" fill="#a6b0c6" class="mono">entrada</text>
+
+            <!-- sobre -->
+            <!-- conector sobre → agente -->
+            <path id="proc-link" d="M 450 216 L 712 186" fill="none" stroke="#5eead4"
+                  stroke-width="5" stroke-linecap="round" />
+            <polygon id="proc-link-head" points="712,186 689,202 686,176" fill="#5eead4" />
+
+            <!-- agente -->
+            <g id="proc-agent">
+              <line x1="790" y1="74" x2="790" y2="33" stroke="#5eead4" stroke-width="5" stroke-linecap="round" />
+              <circle id="proc-ant-dot" cx="790" cy="22" r="12" fill="#a78bfa" />
+              <rect x="700" y="74" width="180" height="144" rx="34" fill="#1d2230"
+                    stroke="#5eead4" stroke-width="5" />
+              <g id="proc-eyes">
+                <circle cx="756" cy="136" r="16" fill="#5eead4" />
+                <circle cx="824" cy="136" r="16" fill="#5eead4" />
+              </g>
+              <rect x="764" y="174" width="52" height="8" rx="4" fill="#6d7891" />
+            </g>
+
+            <!-- chips de enriquecimiento -->
+            <g id="proc-chip-1" class="proc-chip">
+              <rect x="495" y="374" width="250" height="56" rx="28" fill="#1d2230"
+                    stroke="rgba(94,234,212,0.5)" stroke-width="3" />
+              <text x="620" y="413" text-anchor="middle" font-size="38" fill="#f4f6fb" class="mono">prioridad</text>
+            </g>
+            <g id="proc-chip-2" class="proc-chip">
+              <rect x="453" y="436" width="430" height="56" rx="28" fill="#1d2230"
+                    stroke="rgba(94,234,212,0.5)" stroke-width="3" />
+              <text x="668" y="475" text-anchor="middle" font-size="38" fill="#f4f6fb" class="mono">respuesta sugerida</text>
+            </g>
+            <g id="proc-chip-3" class="proc-chip">
+              <rect x="454" y="494" width="224" height="56" rx="28" fill="#1d2230"
+                    stroke="rgba(94,234,212,0.5)" stroke-width="3" />
+              <text x="566" y="533" text-anchor="middle" font-size="38" fill="#f4f6fb" class="mono">contexto</text>
+            </g>
+
+            <!-- bandejas, rotuladas arriba -->
+            <text id="proc-tray-txt-1" x="1346" y="122" text-anchor="middle" font-size="40"
+                  fill="#5eead4" class="mono" opacity="0">respondido</text>
+            <rect id="proc-tray-1" x="1176" y="140" width="340" height="150" rx="20"
+                  fill="#1d2230" stroke="#272d3d" stroke-width="4" />
+            <text id="proc-tray-txt-2" x="1346" y="322" text-anchor="middle" font-size="40"
+                  fill="#a6b0c6" class="mono" opacity="0">archivado</text>
+            <rect id="proc-tray-2" x="1176" y="340" width="340" height="150" rx="20"
+                  fill="#1d2230" stroke="#272d3d" stroke-width="4" />
+
+            <!-- contador -->
+            <g id="proc-badge">
+              <rect x="1380" y="216" width="108" height="52" rx="26" fill="#5eead4" />
+              <text x="1434" y="255" text-anchor="middle" font-size="38" fill="#06231f" class="mono">248</text>
+            </g>
+
+            <!-- El sobre va DESPUES de las bandejas a proposito: las bandejas tienen
+                 fondo opaco y, si se dibujan despues, tapan el sobre archivado.
+                 El barrido va despues del sobre para verse por encima de el. -->
+            <g id="proc-envelope">
+              <rect x="120" y="174" width="340" height="196" rx="20" fill="url(#proc-grad)" />
+              <path d="M 128 184 L 290 284 L 452 184" fill="none" stroke="#06231f" stroke-width="7"
+                    stroke-linecap="round" stroke-linejoin="round" />
+              <rect id="proc-line-1" x="170" y="294" width="220" height="10" rx="5" fill="#06231f" />
+              <rect id="proc-line-2" x="170" y="318" width="170" height="10" rx="5" fill="#06231f" />
+              <rect id="proc-line-3" x="170" y="342" width="120" height="10" rx="5" fill="#06231f" />
+            </g>
+
+            <g id="proc-scan">
+              <rect x="0" y="180" width="44" height="184" fill="#5eead4" opacity="0.16" />
+              <rect x="18" y="180" width="8" height="184" fill="#f4f6fb" />
+            </g>
+          </svg>
+        </div>
+        <p class="sm frag" id="f-proceso" style="margin-top:30px; max-width:1664px">
+          <strong class="teal">Seek-safe:</strong> no se reproduce: el reloj global la posiciona.
+        </p>
+      </div>
+    </div>
+
+    <!-- 11 · COMPONENTE: ÉNFASIS -->
+    <div id="s-mark" class="scene" data-composition-id="ej-destacado" data-start="118" data-duration="13"
          data-label="Ejemplo: énfasis" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Ejemplo 4 · caption-highlight</div>
+        <div class="kicker" data-anim>Ejemplo 5 · caption-highlight</div>
         <h2 data-anim style="margin-top:24px; max-width:1520px">Este es el reemplazo correcto de la animación decorativa</h2>
         <div class="card" data-anim style="margin-top:48px; max-width:1460px; padding:52px 54px">
           <p class="phrase">El texto ya está. <span class="mark">Una palabra</span> se enciende.</p>
@@ -391,8 +494,8 @@
       </div>
     </div>
 
-    <!-- 11 · EL ESQUELETO -->
-    <div id="s-esq" class="scene" data-composition-id="esqueleto" data-start="118" data-duration="13"
+    <!-- 12 · EL ESQUELETO -->
+    <div id="s-esq" class="scene" data-composition-id="esqueleto" data-start="131" data-duration="13"
          data-label="El esqueleto" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -409,8 +512,8 @@
       </div>
     </div>
 
-    <!-- 12 · DECK O VIDEO -->
-    <div id="s-routing" class="scene" data-composition-id="deck-o-video" data-start="131" data-duration="12"
+    <!-- 13 · DECK O VIDEO -->
+    <div id="s-routing" class="scene" data-composition-id="deck-o-video" data-start="144" data-duration="12"
          data-label="Deck o video" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -433,8 +536,8 @@
       </div>
     </div>
 
-    <!-- 13 · ARQUITECTURA -->
-    <div id="s-arq" class="scene" data-composition-id="arquitectura" data-start="143" data-duration="12"
+    <!-- 14 · ARQUITECTURA -->
+    <div id="s-arq" class="scene" data-composition-id="arquitectura" data-start="156" data-duration="12"
          data-label="Arquitectura" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -456,8 +559,8 @@
       </div>
     </div>
 
-    <!-- 14 · CIERRE -->
-    <div id="s-cierre" class="scene" data-composition-id="cierre" data-start="155" data-duration="12"
+    <!-- 15 · CIERRE -->
+    <div id="s-cierre" class="scene" data-composition-id="cierre" data-start="168" data-duration="12"
          data-label="Cierre" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -471,13 +574,13 @@
         </p>
         <div class="card" data-anim style="margin-top:44px; max-width:1400px">
           <h3 class="teal">22 prompts copiables</h3>
-          <p>12 de slides y 10 de video, en seis escenarios con dos tonos cada uno. Partes 3 y 4 del curso.</p>
+          <p>12 de slides y 10 de video, en seis escenarios con dos tonos cada uno. Partes 3 y 4. Comandos verificados en la 8, y tres sistemas reales en la 9.</p>
         </div>
       </div>
     </div>
 
     <!-- RAMA · INV-1 -->
-    <div id="s-inv1" class="scene" data-composition-id="inv-1" data-start="167" data-duration="14"
+    <div id="s-inv1" class="scene" data-composition-id="inv-1" data-start="180" data-duration="14"
          data-label="Inventario" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -505,7 +608,7 @@
     </div>
 
     <!-- RAMA · INV-2 -->
-    <div id="s-inv2" class="scene" data-composition-id="inv-2" data-start="181" data-duration="14"
+    <div id="s-inv2" class="scene" data-composition-id="inv-2" data-start="194" data-duration="14"
          data-label="Cuándo construir a mano" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
@@ -529,7 +632,8 @@
     <script>
       (function () {
         window.__timelines = window.__timelines || {};
-        var TOTAL = 195;
+        window.__hfTotal = 208;
+        var TOTAL = window.__hfTotal;
         var root = gsap.timeline({ paused: true });
         root.fromTo("#progress span", { scaleX: 0 }, { scaleX: 1, duration: TOTAL, ease: "none" }, 0);
         root.fromTo("#portada-rule", { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: "power2.out" }, 0.4);
@@ -544,18 +648,23 @@
           { id: "s-circuito", start: 19, end: 30 }, { id: "s-identidad", start: 30, end: 42 },
           { id: "s-layout", start: 42, end: 54 }, { id: "s-mapa", start: 54, end: 66 },
           { id: "s-chart", start: 66, end: 79 }, { id: "s-term", start: 79, end: 92 },
-          { id: "s-mockup", start: 92, end: 105 }, { id: "s-mark", start: 105, end: 118 },
-          { id: "s-esq", start: 118, end: 131 }, { id: "s-routing", start: 131, end: 143 },
-          { id: "s-arq", start: 143, end: 155 }, { id: "s-cierre", start: 155, end: 167 },
-          { id: "s-inv1", start: 167, end: 181 }, { id: "s-inv2", start: 181, end: 195 }
+          { id: "s-mockup", start: 92, end: 105 }, { id: "s-proceso", start: 105, end: 118 },
+          { id: "s-mark", start: 118, end: 131 }, { id: "s-esq", start: 131, end: 144 },
+          { id: "s-routing", start: 144, end: 156 }, { id: "s-arq", start: 156, end: 168 },
+          { id: "s-cierre", start: 168, end: 180 }, { id: "s-inv1", start: 180, end: 194 },
+          { id: "s-inv2", start: 194, end: 208 }
         ];
         var FRAGMENTS = [
           { time: 33.4, id: "f-iden-1" }, { time: 34.1, id: "f-iden-2" },
           { time: 45.4, id: "f-lay-1" }, { time: 46.2, id: "f-lay-2" },
           { time: 61.5, id: "f-mapa" }, { time: 74.5, id: "f-chart" },
-          { time: 102.5, id: "f-mock" }, { time: 152.5, id: "f-arq" },
-          { time: 190.5, id: "f-inv" }
+          { time: 102.5, id: "f-mock" }, { time: 110.5, id: "f-proceso" },
+          { time: 165.5, id: "f-arq" }, { time: 203.5, id: "f-inv" }
         ];
+        var TOTAL = window.__hfTotal || 208;
+        var procScene = document.getElementById("s-proceso");
+        var procStart = procScene ? parseFloat(procScene.dataset.start) : 105;
+        var procDur = procScene ? parseFloat(procScene.dataset.duration) : 13;
         var lastActive = null;
 
         function fireEntrance(sceneEl) {
@@ -584,7 +693,9 @@
         function updateVisibility(t) {
           var active = sceneAt(t);
           var bar = document.getElementById("pct");
-          if (bar) bar.textContent = Math.min(100, Math.round((t / 195) * 100)) + "%";
+          if (bar) bar.textContent = Math.min(100, Math.round((t / TOTAL) * 100)) + "%";
+
+          procTl.time(Math.min(procDur, Math.max(0, t - procStart)), true);
 
           for (var i = 0; i < SCENES.length; i++) {
             var s = SCENES[i];
@@ -619,6 +730,65 @@
           }
         }
         window.__hfSetTime = updateVisibility;
+
+        // La escena del proceso es la unica con linea de tiempo propia.
+        // El resto del deck entra por fireEntrance, que no es buscable;
+        // esta se posiciona desde el reloj global, asi que cualquier salto
+        // cae en el fotograma exacto. Se actualiza siempre, no solo activa.
+        var procLink = document.getElementById("proc-link");
+        var linkLen = procLink ? Math.ceil(procLink.getTotalLength()) : 264;
+        if (procLink) procLink.style.strokeDasharray = linkLen + "px";
+
+        var procTl = gsap.timeline({ paused: true });
+        procTl.fromTo("#proc-envelope", { x: -250, rotation: -7 },
+          { x: 0, rotation: 0, duration: 2.05, ease: "power3.out" }, 0);
+        procTl.fromTo("#proc-scan", { x: 112, opacity: 0 },
+          { x: 412, opacity: 1, duration: 2.0, ease: "none" }, 2.2);
+        procTl.fromTo("#proc-scan", { opacity: 1 },
+          { opacity: 0, duration: 0.2, ease: "power1.in", immediateRender: false }, 4.2);
+        procTl.fromTo("#proc-line-1", { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: "power2.out", transformOrigin: "0px 0px" }, 2.85);
+        procTl.fromTo("#proc-line-2", { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: "power2.out", transformOrigin: "0px 0px" }, 3.35);
+        procTl.fromTo("#proc-line-3", { scaleX: 0 },
+          { scaleX: 1, duration: 0.5, ease: "power2.out", transformOrigin: "0px 0px" }, 3.85);
+        procTl.fromTo("#proc-agent", { y: -240 },
+          { y: 0, duration: 1.45, ease: "power3.out" }, 4.4);
+        procTl.fromTo("#proc-ant-dot", { scale: 0.62 },
+          { scale: 1.16, duration: 0.55, ease: "sine.inOut", yoyo: true, repeat: 3,
+            transformOrigin: "50% 50%" }, 4.6);
+        procTl.fromTo("#proc-eyes", { scaleY: 1 },
+          { scaleY: 0.1, duration: 0.09, ease: "power2.in", transformOrigin: "50% 50%" }, 5.95);
+        procTl.to("#proc-eyes", { scaleY: 1, duration: 0.2, ease: "power2.out" }, 6.04);
+        procTl.fromTo("#proc-link", { strokeDashoffset: linkLen },
+          { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut" }, 5.15);
+        procTl.fromTo("#proc-link-head", { opacity: 0, scale: 0.5 },
+          { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)", transformOrigin: "50% 50%" }, 6.42);
+        procTl.fromTo("#proc-chip-1", { x: 150, y: -96, scale: 0.7, opacity: 0 },
+          { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.9, ease: "power3.out", transformOrigin: "50% 50%" }, 6.9);
+        procTl.fromTo("#proc-chip-2", { x: 150, y: -96, scale: 0.7, opacity: 0 },
+          { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.9, ease: "power3.out", transformOrigin: "50% 50%" }, 7.35);
+        procTl.fromTo("#proc-chip-3", { x: 150, y: -96, scale: 0.7, opacity: 0 },
+          { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.9, ease: "power3.out", transformOrigin: "50% 50%" }, 7.8);
+        procTl.fromTo("#proc-tray-txt-1", { opacity: 0 },
+          { opacity: 1, duration: 0.5, ease: "power2.out" }, 9.05);
+        procTl.fromTo("#proc-tray-txt-2", { opacity: 0 },
+          { opacity: 1, duration: 0.5, ease: "power2.out" }, 9.25);
+        procTl.fromTo("#proc-link", { opacity: 1 },
+          { opacity: 0, duration: 0.55, ease: "power2.in", immediateRender: false }, 9.2);
+        procTl.fromTo("#proc-link-head", { opacity: 1 },
+          { opacity: 0, duration: 0.45, ease: "power2.in", immediateRender: false }, 9.2);
+        procTl.fromTo("#proc-envelope", { x: 0, y: 0, scale: 1, rotation: 0 },
+          { x: 1132.5, y: 187.1, scale: 0.55, rotation: 0, duration: 2.6, ease: "power2.inOut",
+            immediateRender: false }, 9.15);
+        procTl.fromTo("#proc-badge", { opacity: 0, scale: 0.55 },
+          { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.7)", transformOrigin: "50% 50%" }, 10.7);
+        procTl.to("#proc-tray-2", { stroke: "#5eead4", duration: 0.42, ease: "power2.out" }, 11.75);
+        procTl.fromTo("#proc-badge", { scale: 1 },
+          { scale: 1.08, duration: 0.4, ease: "sine.inOut", yoyo: true, repeat: 1,
+            immediateRender: false }, 12.2);
+        window.__timelines["ej-proceso"] = procTl;
+
         updateVisibility(0);
 
         // Las barras del gráfico crecen al entrar en su slide.
@@ -628,7 +798,7 @@
         function growBars() {
           if (barsDone) return;
           barsDone = true;
-          gsap.to(".bar", { scaleY: 1, duration: 0.9, stagger: 0.12, ease: "power3.out" });
+          gsap.fromTo(".bar", { scaleY: 0 }, { scaleY: 1, duration: 0.9, stagger: 0.12, ease: "power3.out" });
           document.querySelectorAll(".mark").forEach(function (m) { m.classList.add("on"); });
         }
         window.__hfGrowBars = growBars;
@@ -646,15 +816,16 @@
           { id: "circuito", start: 19, duration: 11 }, { id: "identidad", start: 30, duration: 12 },
           { id: "layout", start: 42, duration: 12 }, { id: "catalogo-mapa", start: 54, duration: 12 },
           { id: "ej-chart", start: 66, duration: 13 }, { id: "ej-terminal", start: 79, duration: 13 },
-          { id: "ej-mockup", start: 92, duration: 13 }, { id: "ej-destacado", start: 105, duration: 13 },
-          { id: "esqueleto", start: 118, duration: 13 }, { id: "deck-o-video", start: 131, duration: 12 },
-          { id: "arquitectura", start: 143, duration: 12 }, { id: "cierre", start: 155, duration: 12 },
-          { id: "inv-1", start: 167, duration: 14 }, { id: "inv-2", start: 181, duration: 14 }
+          { id: "ej-mockup", start: 92, duration: 13 }, { id: "ej-proceso", start: 105, duration: 13 },
+          { id: "ej-destacado", start: 118, duration: 13 }, { id: "esqueleto", start: 131, duration: 13 },
+          { id: "deck-o-video", start: 144, duration: 12 }, { id: "arquitectura", start: 156, duration: 12 },
+          { id: "cierre", start: 168, duration: 12 }, { id: "inv-1", start: 180, duration: 14 },
+          { id: "inv-2", start: 194, duration: 14 }
         ];
         function post() {
           try {
             parent.postMessage({ source: "hf-preview", type: "timeline",
-              durationInFrames: 195 * FPS, scenes: scenes }, "*");
+              durationInFrames: (window.__hfTotal || 208) * FPS, scenes: scenes }, "*");
           } catch (e) {}
         }
         if (document.readyState === "complete") setTimeout(post, 300);

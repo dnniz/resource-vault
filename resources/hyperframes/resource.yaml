@@ -3,7 +3,7 @@ id: hyperframes
 title: "HyperFrames: presentar con componentes, no con animación"
 type: course
 language: es
-summary: "Curso de uso de HyperFrames pensado para presentar: cómo pedir un deck donde cada slide lleva un visual que demuestra lo que el texto afirma, y una biblioteca de prompts copiables para slides y videos."
+summary: "Curso de uso de HyperFrames: cómo pedir un deck donde cada visual demuestra lo que el texto afirma, con prompts copiables para slides y video, catálogo de componentes, referencia de comandos verificada y tres escenarios reales con sus bugs."
 tags: [video, presentaciones, agentes, prompts, hyperframes]
 source:
   url: https://hyperframes.heygen.com/prompting/overview
@@ -11,10 +11,10 @@ source:
   captured: 2026-10-12
   credits: >-
     Curso redactado en este repositorio a partir de la documentación pública de
-    HyperFrames (heygen-com/hyperframes, Apache-2.0), el catálogo de bloques y la
-    verificación local del CLI 0.8.149. El veredicto sobre el skill de terceros
-    nateherkai/hyperframes es análisis propio. No es contenido original de ese
-    proyecto.
+    HyperFrames (heygen-com/hyperframes, Apache-2.0): guías de skills y de
+    plugins, catálogo de bloques y verificación local del CLI 0.8.149. El
+    veredicto sobre el skill de terceros nateherkai/hyperframes es análisis
+    propio. No es contenido original de ese proyecto.
 parts:
   - id: 01-como-funciona
     title: "Cómo funciona y cuándo usar slide o video"
@@ -43,4 +43,12 @@ parts:
   - id: 07-kit
     title: "Glosario y troubleshooting"
     kind: reference
+    duration: "consulta"
+  - id: 08-comandos
+    title: "Referencia de comandos"
+    kind: reference
+    duration: "consulta"
+  - id: 09-escenarios
+    title: "Escenarios reales de uso"
+    kind: reading
     duration: "consulta"
