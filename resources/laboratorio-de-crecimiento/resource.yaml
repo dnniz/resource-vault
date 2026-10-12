@@ -1,0 +1,60 @@
+schema: vault/v1
+id: laboratorio-de-crecimiento
+title: "Laboratorio de crecimiento: el sistema comercial que se puede auditar"
+type: course
+language: es
+summary: "Cómo pasar de una libreta de leads a un sistema comercial trazable: eventos en vez de estados, listas cerradas, una sola fuente de verdad y un «contexto que viaja» con cada seguimiento. Siete fases de punta a punta con sus campos, KPIs y umbrales, el ciclo semanal del laboratorio de crecimiento (hipótesis, una variable, experimento) y el stack mínimo de datos para arrancar mañana."
+tags: [ventas, growth, crm, pipeline, operaciones, experiments, saas, agency, kpis]
+source:
+  url: https://elcursodelagua.substack.com
+  author: "Libia / AZXION — proceso comercial v2026.05 y SOP Laboratorio de Crecimiento v1.0"
+  captured: 2026-10-12
+  credits: >-
+    Curso estructurado a partir de dos documentos operativos internos del
+    sistema LIB.SYS / AZXION: el «Proceso comercial» v2026.05 y el «SOP
+    Laboratorio de Crecimiento adaptable a cualquier negocio» v1.0. Archivados
+    con fines de estudio personal. Los campos, umbrales, taxonomías y
+    procedimientos pertenecen al autor original. La reorganización en módulos,
+    los objetivos y las plantillas son trabajo de esta bóveda. Documento de uso
+    interno: no es contenido original de este repositorio.
+parts:
+  - id: 01-principios
+    title: "Cinco principios no negociables"
+    kind: slides
+    duration: "15 min"
+  - id: 02-mapa-del-proceso
+    title: "El mapa completo del proceso"
+    kind: slides
+    duration: "12 min"
+  - id: 03-calificacion
+    title: "Fase 02 · Calificación: MQL → SQL"
+    kind: slides
+    duration: "20 min"
+  - id: 04-discovery-telemetria
+    title: "Fase 03 · Discovery y telemetría de la llamada"
+    kind: slides
+    duration: "20 min"
+  - id: 05-seguimientos
+    title: "Fase 05 · Seguimientos: el sistema crítico"
+    kind: slides
+    duration: "25 min"
+  - id: 06-propuesta-cierre-handoff
+    title: "Propuesta, cierre y handoff a producto"
+    kind: slides
+    duration: "20 min"
+  - id: 07-ciclo-del-laboratorio
+    title: "El ciclo semanal del laboratorio"
+    kind: reading
+    duration: "25 min"
+  - id: 08-conversacion-y-cuellos
+    title: "Taxonomías y detección de cuellos de botella"
+    kind: slides
+    duration: "20 min"
+  - id: 09-flexibilidad-y-stack
+    title: "Cómo el sistema no se rompe, y el stack mínimo"
+    kind: reference
+    duration: "consulta"
+  - id: 10-kit
+    title: "Kit: plantillas y listas cerradas"
+    kind: reference
+    duration: "consulta"
