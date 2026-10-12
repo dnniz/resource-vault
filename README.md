@@ -12,6 +12,8 @@ renderiza cualquier recurso que cumpla el esquema sin cambiar código.
 
 | Recurso | Tipo | Fuente original |
 |---|---|---|
+| [`el-curso-del-agua`](resources/el-curso-del-agua/) | curso (8 partes: 5 decks + lectura + aplicación + kit) | [elcursodelagua.substack.com](https://elcursodelagua.substack.com) |
+| [`laboratorio-de-crecimiento`](resources/laboratorio-de-crecimiento/) | curso (10 partes: 6 decks + lectura + 3 referencias) | Sistema LIB.SYS / AZXION (uso interno) |
 | [`el-ultimo-kilometro`](resources/el-ultimo-kilometro/) | curso (5 módulos + kit) | [clase-ultimo-kilometro.vercel.app](https://clase-ultimo-kilometro.vercel.app/) |
 | [`gstack`](resources/gstack/) | guía (7 partes: 3 decks + 4 lecturas) | [garrytan/gstack](https://github.com/garrytan/gstack) |
 
@@ -53,11 +55,25 @@ Ver guía completa en [`docs/SCHEMA.md`](docs/SCHEMA.md).
 
 ## Atribución y uso
 
-El contenido de `resources/el-ultimo-kilometro/` proviene de la clase
-**"El Último Kilómetro"** (Imperio Agéntico). Se archiva aquí con fines de
-**estudio personal**, con crédito a su autor. No es contenido original de este
-repo y no debe usarse para redistribución comercial. El código del visor sí es
-MIT (ver `site/LICENSE-CODE` no requerido: sin código de terceros copiado).
+El contenido de los cuatro recursos archivados se archiva aquí con fines de
+**estudio personal**, con crédito a sus autores. No es contenido original de este
+repo y no debe usarse para redistribución comercial.
+
+- **`resources/el-curso-del-agua/`** proviene de la newsletter **"El Curso del
+  Agua"** de Stiven Rosales (dic 2025 – may 2026). Las anécdotas técnicas, los
+  nombres del producto (Haiku) y las citas textuales pertenecen al autor. La
+  reorganización en módulos y el material de referencia son de esta bóveda.
+- **`resources/laboratorio-de-crecimiento/`** proviene de dos documentos
+  operativos internos del sistema **LIB.SYS / AZXION**: el *Proceso comercial*
+  v2026.05 y el *SOP Laboratorio de Crecimiento* v1.0. Los campos, umbrales,
+  taxonomías y procedimientos pertenecen al autor original; son documentos
+  marcados como de uso interno y no para redistribución.
+- **`resources/el-ultimo-kilometro/`** proviene de la clase **"El Último
+  Kilómetro"** (Imperio Agéntico).
+- **`resources/hyperframes/`** fue redactado en este repo a partir de la
+  documentación pública de HyperFrames (Apache-2.0).
+
+El código del visor es propio y no incluye código de terceros copiado.
 
 ## Estructura
 
