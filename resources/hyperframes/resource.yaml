@@ -1,36 +1,46 @@
 schema: vault/v1
 id: hyperframes
-title: "HyperFrames: de HTML a video determinista"
+title: "HyperFrames: presentar con componentes, no con animación"
 type: course
 language: es
-summary: "Curso de uso de HyperFrames: escribís una composición HTML y obtenés un MP4 determinista —o lo servís como un deck navegable en vivo, con reveals, ramas y modo presentador."
-tags: [video, agentes, html, automatizacion, hyperframes]
+summary: "Curso de uso de HyperFrames pensado para presentar: cómo pedir un deck donde cada slide lleva un visual que demuestra lo que el texto afirma, y una biblioteca de prompts copiables para slides y videos."
+tags: [video, presentaciones, agentes, prompts, hyperframes]
 source:
-  url: https://hyperframes.heygen.com/introduction
+  url: https://hyperframes.heygen.com/prompting/overview
   author: "HeyGen"
   captured: 2026-10-12
   credits: >-
     Curso redactado en este repositorio a partir de la documentación pública de
-    HyperFrames (heygen-com/hyperframes, Apache-2.0) y de la verificación local
-    del CLI 0.8.149. No es contenido original de ese proyecto.
+    HyperFrames (heygen-com/hyperframes, Apache-2.0), el catálogo de bloques y la
+    verificación local del CLI 0.8.149. El veredicto sobre el skill de terceros
+    nateherkai/hyperframes es análisis propio. No es contenido original de ese
+    proyecto.
 parts:
-  - id: 01-que-es
-    title: "Qué es y por qué importa"
+  - id: 01-como-funciona
+    title: "Cómo funciona y cuándo usar slide o video"
     kind: reading
     duration: "10 min"
-  - id: 02-instalacion
-    title: "Instalación y CLI"
+  - id: 02-buena-slide
+    title: "Cómo se construye una buena slide"
+    kind: slides
+    duration: "20 min"
+  - id: 03-prompts-slides
+    title: "Prompts de referencia para slides"
     kind: reading
-    duration: "10 min"
-  - id: 03-composicion
-    title: "La composición y la animación"
-    kind: slides
-    duration: "15 min"
-  - id: 04-decks
-    title: "Decks navegables en vivo"
-    kind: slides
-    duration: "15 min"
-  - id: 05-kit
-    title: "Kit de referencia"
+    duration: "consulta"
+  - id: 04-prompts-video
+    title: "Prompts de referencia para video"
+    kind: reading
+    duration: "consulta"
+  - id: 05-catalogo
+    title: "Catálogo de componentes visuales"
+    kind: reading
+    duration: "consulta"
+  - id: 06-arquitectura
+    title: "Arquitectura: por qué funciona"
+    kind: reference
+    duration: "consulta"
+  - id: 07-kit
+    title: "Glosario y troubleshooting"
     kind: reference
     duration: "consulta"

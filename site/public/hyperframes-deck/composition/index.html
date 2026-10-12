@@ -2,489 +2,536 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>HyperFrames: HTML → video determinista</title>
+    <title>Presentar con HyperFrames</title>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
     <style>
       :root {
-        --bg: #08090d;
-        --bg-2: #10131c;
-        --surface: #171b26;
-        --surface-2: #1e2433;
-        --line: #2b3244;
-        --ink: #f2f5fb;
-        --ink-2: #aab4c9;
-        --ink-3: #727d96;
-        --accent: #5eead4;
-        --accent-2: #a78bfa;
-        --warn: #fbbf24;
+        --bg: #07080c; --bg2: #0e1017; --surface: #161a24; --surface2: #1d2230;
+        --line: #272d3d; --ink: #f4f6fb; --ink2: #a6b0c6; --ink3: #6d7891;
+        --teal: #5eead4; --violet: #a78bfa; --amber: #fbbf24; --green: #4ade80; --rose: #fb7185;
       }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body {
-        width: 1920px; height: 1080px; overflow: hidden;
-        background: var(--bg); color: var(--ink);
-        font-family: system-ui, sans-serif;
-        -webkit-font-smoothing: antialiased;
-      }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg);
+        color: var(--ink); font-family: system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
       body { position: relative; }
 
-      /* Escenas: ocultas por defecto. opacity:0 sola no basta —
-         visibility hidden evita que una capa invisible se coma los clicks. */
-      .scene {
-        position: absolute; top: 0; left: 0;
-        width: 1920px; height: 1080px;
-        overflow: hidden;
-        opacity: 0; visibility: hidden; pointer-events: none;
-      }
+      .scene { position: absolute; inset: 0; opacity: 0; visibility: hidden; pointer-events: none; }
       .scene.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+      .pad { position: absolute; inset: 0; padding: 88px 128px 120px; }
+      .grid { position: absolute; inset: 0;
+        background-image: linear-gradient(rgba(94,234,212,.045) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(94,234,212,.045) 1px, transparent 1px);
+        background-size: 96px 96px; }
 
-      .pad { position: absolute; inset: 0; padding: 96px 132px; }
-      .grid {
-        position: absolute; inset: 0; opacity: .5;
-        background-image:
-          linear-gradient(rgba(94,234,212,.05) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(94,234,212,.05) 1px, transparent 1px);
-        background-size: 96px 96px;
-      }
-      .glow {
-        position: absolute; width: 1100px; height: 1100px; border-radius: 50%;
-        filter: blur(120px); opacity: .16; pointer-events: none;
-      }
-
-      .kicker {
-        font-family: ui-monospace, monospace;
-        font-size: 40px; letter-spacing: .2em; text-transform: uppercase;
-        color: var(--accent); font-weight: 600;
-      }
-      h1 { font-size: 92px; line-height: 1.04; font-weight: 800; letter-spacing: -.025em; }
-      h2 { font-size: 64px; line-height: 1.12; font-weight: 750; letter-spacing: -.02em; }
-      .lead { font-size: 48px; line-height: 1.34; color: var(--ink-2); font-weight: 400; }
-      .sm { font-size: 42px; line-height: 1.4; color: var(--ink-2); }
+      .kicker { font-family: ui-monospace, monospace; font-size: 40px; letter-spacing: .2em;
+        text-transform: uppercase; color: var(--teal); font-weight: 600; }
+      h1 { font-size: 88px; line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+      h2 { font-size: 60px; line-height: 1.14; font-weight: 750; letter-spacing: -.02em; }
+      .lead { font-size: 46px; line-height: 1.36; color: var(--ink2); }
+      .sm { font-size: 42px; line-height: 1.42; color: var(--ink2); }
       .mono { font-family: ui-monospace, monospace; }
-      .accent { color: var(--accent); }
-      .accent2 { color: var(--accent-2); }
-      .dim { color: var(--ink-3); }
-
-      .code {
-        font-family: ui-monospace, monospace;
-        font-size: 40px; line-height: 1.5;
-        background: var(--surface); border: 1px solid var(--line);
-        border-radius: 20px; padding: 40px 44px; color: var(--ink);
-      }
-      .code .c { color: var(--ink-3); }
-      .code .t { color: var(--accent); }
-      .code .a { color: var(--accent-2); }
-
-      .cards { display: flex; gap: 36px; }
-      .card {
-        flex: 1; background: var(--surface); border: 1px solid var(--line);
-        border-radius: 24px; padding: 44px 40px;
-      }
-      .card h3 { font-size: 46px; font-weight: 700; margin-bottom: 16px; }
-      .card p { font-size: 40px; line-height: 1.38; color: var(--ink-2); }
-
-      .rows { display: flex; flex-direction: column; gap: 22px; }
-      .row {
-        display: flex; align-items: baseline; gap: 32px;
-        background: var(--surface); border: 1px solid var(--line);
-        border-radius: 18px; padding: 30px 40px;
-      }
-      .row .in { font-size: 40px; color: var(--ink-2); width: 720px; flex: none; }
-      .row .ar { font-size: 40px; color: var(--accent); flex: none; }
-      .row .out { font-size: 40px; color: var(--accent-2); font-weight: 600; }
-
-      .warnbox {
-        background: rgba(251,191,36,.08); border: 2px solid var(--warn);
-        border-radius: 24px; padding: 44px 48px;
-      }
-      .warnbox .wt {
-        font-family: ui-monospace, monospace; font-size: 40px;
-        color: var(--warn); letter-spacing: .12em; margin-bottom: 18px;
-      }
-      .warnbox p { font-size: 44px; line-height: 1.36; color: var(--ink); }
-
-      /* Fragmentos: arrancan ocultos; el controlador los revela al cruzar. */
+      .teal { color: var(--teal); } .violet { color: var(--violet); }
+      .amber { color: var(--amber); } .green { color: var(--green); } .rose { color: var(--rose); }
+      .dim { color: var(--ink3); }
       .frag { opacity: 0; }
 
-      #progress {
-        position: absolute; left: 132px; bottom: 74px;
-        width: 1656px; height: 8px; border-radius: 99px;
-        background: var(--surface-2); overflow: hidden;
-      }
-      #progress span {
-        display: block; height: 100%; width: 100%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        transform: scaleX(0); transform-origin: 0 50%;
-      }
-      #pct {
-        position: absolute; right: 132px; bottom: 66px;
-        font-family: ui-monospace, monospace; font-size: 40px; color: var(--ink-3);
-      }
+      /* ── Mini componentes del catálogo, renderizados de verdad ── */
+
+      /* data-chart */
+      .chart { display: flex; align-items: flex-end; gap: 40px; height: 400px; padding-top: 20px; }
+      .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 18px; }
+      .bar { width: 100%; border-radius: 10px 10px 0 0; transform: scaleY(0); transform-origin: 50% 100%; }
+      .blab { font-family: ui-monospace, monospace; font-size: 40px; color: var(--ink2); }
+      .bval { font-family: ui-monospace, monospace; font-size: 40px; color: var(--teal); }
+
+      /* code-terminal-run */
+      .term { background: #0b0d13; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+      .term-bar { background: var(--surface2); padding: 22px 28px; display: flex; gap: 14px; align-items: center; }
+      .dot { width: 18px; height: 18px; border-radius: 50%; }
+      .term-body { padding: 32px 34px 36px; font-family: ui-monospace, monospace; font-size: 40px; line-height: 1.55; }
+      .caret { display: inline-block; width: 22px; height: 40px; background: var(--teal);
+        vertical-align: -6px; animation: blink 1.1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+
+      /* browser-device-stage */
+      .browser { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+      .bbar { background: var(--surface2); padding: 20px 26px; display: flex; align-items: center; gap: 18px; }
+      .url { font-family: ui-monospace, monospace; font-size: 40px; color: var(--ink3);
+        background: var(--bg2); padding: 8px 20px; border-radius: 10px; flex: 1; }
+      .bbody { padding: 34px; display: flex; flex-direction: column; gap: 20px; }
+      .skel { height: 22px; border-radius: 6px; background: var(--surface2); }
+      .btn { align-self: flex-start; background: var(--teal); color: #06231f; font-weight: 700;
+        font-size: 40px; padding: 14px 32px; border-radius: 12px; }
+
+      /* caption-highlight */
+      .phrase { font-size: 60px; font-weight: 750; line-height: 1.3; }
+      .mark { position: relative; display: inline-block; padding: 0 8px; }
+      .mark::before { content: ""; position: absolute; left: 0; right: 0; top: 12%; bottom: 8%;
+        background: var(--amber); border-radius: 8px; transform: scaleX(0); transform-origin: 0 50%;
+        transition: transform 0.55s cubic-bezier(.22,1,.36,1); }
+      .mark.on::before { transform: scaleX(1); }
+
+      /* estructura genérica */
+      .two { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+      .card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 40px 42px; }
+      .card h3 { font-size: 44px; font-weight: 700; margin-bottom: 14px; }
+      .card p { font-size: 40px; line-height: 1.4; color: var(--ink2); }
+      .rows { display: flex; flex-direction: column; gap: 20px; }
+      .row { display: flex; align-items: baseline; gap: 28px; background: var(--surface);
+        border: 1px solid var(--line); border-radius: 16px; padding: 26px 34px; }
+      .row .k { font-family: ui-monospace, monospace; font-size: 40px; color: var(--teal); width: 250px; flex: none; }
+      .row .v { font-size: 40px; color: var(--ink2); }
+
+      .arrowline { display: flex; align-items: center; gap: 22px; }
+      .arrowline .n { font-family: ui-monospace, monospace; font-size: 40px; color: var(--ink3); width: 60px; }
+
+      #progress { position: absolute; left: 128px; bottom: 66px; width: 1664px; height: 8px;
+        border-radius: 99px; background: var(--surface2); overflow: hidden; }
+      #progress span { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: 0 50%;
+        background: linear-gradient(90deg, var(--teal), var(--violet)); }
+      #pct { position: absolute; right: 128px; bottom: 58px; font-family: ui-monospace, monospace;
+        font-size: 40px; color: var(--ink3); }
     </style>
   </head>
   <body>
     <script type="application/hyperframes-slideshow+json">
       {
         "slides": [
-          { "sceneId": "portada",    "notes": "Abrí con la promesa completa: HTML entra, MP4 sale. Decí que el deck se presenta con P." },
-          { "sceneId": "que-es",     "notes": "Una sola idea: el motor mueve Chrome frame por frame y codifica con FFmpeg. No te disperse en las tres tarjetas." },
-          { "sceneId": "determinismo","notes": "Esta es la razón por la que sirve para CI. Insistí: re-renderizar da el mismo video, byte a byte." },
-          { "sceneId": "instalacion","notes": "Dos comandos. El primero instala el core; el segundo es idempotente. Si vuelve a correr, dice 'already up to date'." },
-          { "sceneId": "contrato",    "notes": "Revelá el bloque de a partes. Énfasis: el timing es declarativo, no JavaScript.", "fragments": [44.4, 45.0] },
-          { "sceneId": "gsap",       "notes": "La regla que más se rompe: la timeline se declara pausada. Si hacés .play(), no hay forma de buscar un frame." },
-          { "sceneId": "routing",     "notes": "El router no adivina: mira qué material le diste y elige. Revelá las filas de a una.", "fragments": [73.4, 74.3, 75.2] },
-          { "sceneId": "mp4-vs-deck", "notes": "La trampa que más caro sale. Dejá la caja amarilla en pantalla. El hotspot abre el catálogo como detalle opcional.",
-            "hotspots": [
-              { "id": "h-catalogo", "label": "Ver el catálogo de bloques", "target": "catalogo", "region": { "x": 55, "y": 62, "w": 42, "h": 22 } }
-            ] },
-          { "sceneId": "anatomia",    "notes": "Dos tiempos: primero la isla, después cómo se presenta. Revelá uno y otro.", "fragments": [105.4, 106.3] },
-          { "sceneId": "validacion",  "notes": "check es el gate. Una isla rota no parsea en el player y el fallo aparece tarde." },
-          { "sceneId": "cierre",      "notes": "Cerrá con la ruta mínima: init, 10 segundos, iterar. No vendas features." }
+          { "sceneId": "portada", "notes": "Abrí con el giro: no es un curso de HyperFrames, es un curso de presentar. El deck muestra los componentes, no los describe." },
+          { "sceneId": "error-comun", "notes": "Esta es la tesis del curso. Dejala en pantalla. La animación decorativa es el ruido más caro." },
+          { "sceneId": "circuito", "notes": "Cinco pasos. Lo importante: el paso 3 es donde se define todo, y casi todos lo saltean." },
+          { "sceneId": "identidad", "notes": "Revela las dos reglas. La del test es la que la gente recuerda: si podes escribir #333, te saltaste el paso.", "fragments": [33.4, 34.1] },
+          { "sceneId": "layout", "notes": "El consejo mas rentable del oficio. Si sacar la animacion no cambia lo que se entiende, la animacion sobra.", "fragments": [45.4, 46.2] },
+          { "sceneId": "catalogo-mapa", "notes": "El mapa mental: seis familias de componentes. La rama tiene el inventario completo con los nombres exactos.", "fragments": [61.5] },
+          { "sceneId": "ej-chart", "notes": "Ahi esta el componente renderizado, no descrito. Fijate que el dato reemplaza a la afirmacion.", "fragments": [74.5] },
+          { "sceneId": "ej-terminal", "notes": "Cuando la slide muestra codigo, no lo escribas: terminalizalo. El bloque es determinista." },
+          { "sceneId": "ej-mockup", "notes": "Mostrar la interfaz real dentro de un marco de navegador. Ojo con el crop: contain, no cover, si hay texto.", "fragments": [102.5] },
+          { "sceneId": "ej-destacado", "notes": "Este es el reemplazo correcto de la animacion decorativa: el texto ya esta, una palabra se enciende." },
+          { "sceneId": "esqueleto", "notes": "El motor de las partes 3 y 4 del curso. Seis partes, cinco slots por elemento." },
+          { "sceneId": "deck-o-video", "notes": "La decision previa. Si lo mira alguien sin que estes, es video. Si tenes que argumentar, es deck." },
+          { "sceneId": "arquitectura", "notes": "Solo para los curiosos. Seek-safe es la columna vertebral: el motor no reproduce la linea de tiempo, la posiciona.", "fragments": [152.5] },
+          { "sceneId": "cierre", "notes": "Cerrá con la regla, no con features. 22 prompts copiables en las partes 3 y 4." }
         ],
         "slideSequences": [
-          {
-            "id": "catalogo",
-            "label": "Catálogo y bloques",
+          { "id": "inventario", "label": "Inventario del catálogo",
             "slides": [
-              { "sceneId": "catalogo", "notes": "Detalle opcional: hay ~400 bloques en el registro, se instalan por nombre." },
-              { "sceneId": "bloques",  "notes": "La regla operativa: buscar antes de construir a mano." }
-            ]
-          }
+              { "sceneId": "inv-1", "notes": "Los nombres exactos importan: nombrar el bloque en el prompt fija la tecnica." },
+              { "sceneId": "inv-2", "notes": "Cuando construir a mano: diagramas propios, replicaciones de referencia, tipografia muy particular.", "fragments": [190.5] }
+            ] }
         ]
       }
     </script>
 
     <!-- 1 · PORTADA -->
-    <div id="s-portada" class="scene" data-composition-id="portada"
-         data-start="0" data-duration="9" data-label="Portada"
-         data-width="1920" data-height="1080">
+    <div id="s-portada" class="scene" data-composition-id="portada" data-start="0" data-duration="9"
+         data-label="Portada" data-width="1920" data-height="1080">
       <div class="grid"></div>
-      <div class="glow" style="background:#5eead4; top:-260px; left:-180px"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Curso · HyperFrames 0.8</div>
-        <h1 data-anim style="margin-top:34px; max-width:1560px">
-          Escribís HTML y obtenés un <span class="accent">MP4 determinista</span>
+        <div class="kicker" data-anim>Curso · HyperFrames</div>
+        <h1 data-anim style="margin-top:32px; max-width:1580px">
+          Una slide no se decora.<br /><span class="teal">Se demuestra.</span>
         </h1>
-        <div id="portada-rule" style="width:520px; height:10px; border-radius:99px; margin-top:46px; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transform:scaleX(0); transform-origin:0 50%"></div>
-        <p class="lead" data-anim style="margin-top:40px; max-width:1320px">
-          Composición → preview → render. Sin React, sin build step, sin fees por render.
+        <div id="portada-rule" style="width:520px;height:10px;border-radius:99px;margin-top:44px;
+          background:linear-gradient(90deg,var(--teal),var(--violet));transform:scaleX(0);transform-origin:0 50%"></div>
+        <p class="lead" data-anim style="margin-top:40px; max-width:1340px">
+          Cómo pedir un deck donde cada visual <strong style="color:var(--ink)">reemplaza una
+          afirmación por una evidencia</strong>. Con componentes reales, no con animación de adorno.
         </p>
-        <div class="mono dim" data-anim style="margin-top:64px; font-size:40px">
-          12 slides · 1 rama · navegá con ← →
+        <div class="mono dim" data-anim style="margin-top:56px; font-size:40px">
+          14 slides · 2 de componentes renderizados · 1 rama · navegá con ← →
         </div>
       </div>
     </div>
 
-    <!-- 2 · QUÉ ES -->
-    <div id="s-que-es" class="scene" data-composition-id="que-es"
-         data-start="9" data-duration="10" data-label="Qué es"
-         data-width="1920" data-height="1080">
+    <!-- 2 · EL ERROR COMÚN -->
+    <div id="s-error" class="scene" data-composition-id="error-comun" data-start="9" data-duration="10"
+         data-label="El error común" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Qué es</div>
+        <div class="kicker" data-anim>El error que cuesta más caro</div>
         <h2 data-anim style="margin-top:30px; max-width:1600px">
-          El motor conduce Chrome headless <span class="accent">frame por frame</span> y codifica con FFmpeg
+          Animar el texto no agrega nada. <span class="amber">El visual sí.</span>
         </h2>
-        <div class="cards" data-anim style="margin-top:64px">
+        <div class="two" data-anim style="margin-top:56px">
           <div class="card">
-            <h3 class="accent">HTML editable</h3>
-            <p>La composición sigue siendo un archivo que abrís en el navegador y en tus herramientas.</p>
+            <h3 class="dim">Slide decorada</h3>
+            <p>El texto dice "el churn bajó 40%" y entra con rebote. Vos confiás o no. Nada cambió.</p>
           </div>
-          <div class="card">
-            <h3 class="accent2">Determinista</h3>
-            <p>Misma entrada, mismos frames. Pensado para CI y tests de regresión.</p>
-          </div>
-          <div class="card">
-            <h3>Sin build</h3>
-            <p>Un <span class="mono">index.html</span> se previsualiza tal cual, sin compilar nada.</p>
+          <div class="card" style="border-color:var(--teal)">
+            <h3 class="teal">Slide que demuestra</h3>
+            <p>Mismo texto, y al lado un gráfico que llega a 40%. Ahora no necesitás creerlo: lo ves.</p>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- 3 · DETERMINISMO -->
-    <div id="s-determinismo" class="scene" data-composition-id="determinismo"
-         data-start="19" data-duration="10" data-label="Determinismo"
-         data-width="1920" data-height="1080">
-      <div class="grid"></div>
-      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>La propiedad clave</div>
-        <h2 data-anim style="margin-top:30px; max-width:1620px">
-          La misma entrada produce los mismos frames, <span class="accent">siempre</span>
-        </h2>
-        <div class="code" data-anim style="margin-top:56px">
-          <span class="c"># render 1</span> → 300 frames · <span class="t">sha256 a3f1…9c2e</span><br />
-          <span class="c"># render 2</span> → 300 frames · <span class="t">sha256 a3f1…9c2e</span><br />
-          <span class="a">✓ idénticos</span>
-        </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
-          Por eso sirve para automatizar. Un video generado por IA cambia en cada corrida; este no.
+        <p class="sm" id="f-err" style="margin-top:48px; max-width:1480px">
+          <strong style="color:var(--amber)">La regla:</strong> si sacar la animación no cambia lo que
+          se entiende, la animación no debería estar.
         </p>
       </div>
     </div>
 
-    <!-- 4 · INSTALACIÓN -->
-    <div id="s-instalacion" class="scene" data-composition-id="instalacion"
-         data-start="29" data-duration="12" data-label="Instalación"
-         data-width="1920" data-height="1080">
-      <div class="grid"></div>
-      <div class="glow" style="background:#a78bfa; bottom:-320px; right:-240px"></div>
-      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Instalación</div>
-        <h2 data-anim style="margin-top:30px; max-width:1560px">
-          Dos comandos y 10 skills: eso es todo el setup
-        </h2>
-        <div class="code" data-anim style="margin-top:52px">
-          <span class="c"># instala o refresca el core set</span><br />
-          <span class="t">npx hyperframes skills update</span><br /><br />
-          <span class="c"># idempotente: repetirlo no rompe nada</span><br />
-          <span class="t">npx hyperframes skills update</span> <span class="a">→ already up to date</span>
-        </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
-          El router instala los workflows bajo demanda con <span class="mono">skills update &lt;nombre&gt;</span>.
-        </p>
-      </div>
-    </div>
-
-    <!-- 5 · CONTRATO (2 fragmentos) -->
-    <div id="s-contrato" class="scene" data-composition-id="contrato"
-         data-start="41" data-duration="16" data-label="El contrato"
-         data-width="1920" data-height="1080">
+    <!-- 3 · EL CIRCUITO -->
+    <div id="s-circuito" class="scene" data-composition-id="circuito" data-start="19" data-duration="11"
+         data-label="El circuito" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>El contrato de composición</div>
-        <h2 data-anim style="margin-top:30px; max-width:1600px">
-          El timing vive en atributos <span class="accent">data-*</span>, no en JavaScript
-        </h2>
-        <div class="code" data-anim style="margin-top:48px">
-          &lt;div <span class="t">data-composition-id</span>="intro"<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="t">data-start</span>="0" <span class="t">data-duration</span>="6"
-          <span class="t">data-width</span>="1920" <span class="t">data-height</span>="1080"&gt;
-        </div>
-        <div class="code frag" id="f-contrato-1" style="margin-top:28px">
-          &lt;h1 <span class="a">class</span>="clip" <span class="t">data-track-index</span>="1"<br />
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="t">data-start</span>="1" <span class="t">data-duration</span>="4"&gt;Lanzamiento&lt;/h1&gt;
-        </div>
-        <p class="sm frag" id="f-contrato-2" style="margin-top:34px">
-          <span class="mono accent">class="clip"</span> es lo que el motor pone y quita de la timeline.
-        </p>
-      </div>
-    </div>
-
-    <!-- 6 · GSAP -->
-    <div id="s-gsap" class="scene" data-composition-id="gsap"
-         data-start="57" data-duration="13" data-label="Animación"
-         data-width="1920" data-height="1080">
-      <div class="grid"></div>
-      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Animación</div>
-        <h2 data-anim style="margin-top:30px; max-width:1620px">
-          Las animaciones deben ser <span class="accent2">seekable</span>: timeline pausada
-        </h2>
-        <div class="code" data-anim style="margin-top:52px">
-          <span class="t">const</span> tl = gsap.timeline({ <span class="a">paused</span>: <span class="t">true</span> });<br />
-          tl.from(<span class="a">"#title"</span>, { opacity: 0, y: 40, duration: 0.8 }, <span class="t">1</span>);<br />
-          window.__timelines[<span class="a">"intro"</span>] = tl;
-        </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1460px">
-          Si hacés <span class="mono">.play()</span>, el motor no tiene forma de buscar el frame 143.
-        </p>
-      </div>
-    </div>
-
-    <!-- 7 · ROUTING (3 fragmentos) -->
-    <div id="s-routing" class="scene" data-composition-id="routing"
-         data-start="70" data-duration="16" data-label="Routing"
-         data-width="1920" data-height="1080">
-      <div class="grid"></div>
-      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Routing</div>
-        <h2 data-anim style="margin-top:30px; max-width:1620px">
-          El router elige el workflow según el material que le des
-        </h2>
-        <div class="rows" style="margin-top:48px">
-          <div class="row" data-anim>
-            <span class="in">URL de producto</span><span class="ar">→</span><span class="out">product-launch-video</span>
-          </div>
-          <div class="row frag" id="f-routing-1">
-            <span class="in">Pull request</span><span class="ar">→</span><span class="out">pr-to-video</span>
-          </div>
-          <div class="row frag" id="f-routing-2">
-            <span class="in">Footage de entrevista</span><span class="ar">→</span><span class="out">embedded-captions</span>
-          </div>
-          <div class="row frag" id="f-routing-3">
-            <span class="in">Cualquier otra cosa</span><span class="ar">→</span><span class="out">general-video</span>
-          </div>
+        <div class="kicker" data-anim>El circuito completo</div>
+        <h2 data-anim style="margin-top:28px; max-width:1500px">Cinco pasos. El tercero define todo.</h2>
+        <div class="rows" data-anim style="margin-top:44px">
+          <div class="row"><span class="k violet">1 · Elegí</span><span class="v">Deck o video. No es lo mismo, y decide el resto.</span></div>
+          <div class="row"><span class="k violet">2 · Encargá</span><span class="v">Prompt con las seis partes. El agente pregunta lo que falte.</span></div>
+          <div class="row" style="border-color:var(--teal)"><span class="k teal">3 · Decidí el visual</span><span class="v">Qué componente demuestra lo que la slide afirma. Acá se juega todo.</span></div>
+          <div class="row"><span class="k violet">4 · Iterá</span><span class="v">Pedidos chicos y específicos, no reescribir todo.</span></div>
+          <div class="row"><span class="k violet">5 · Validá</span><span class="v">El gate antes de renderizar o presentar.</span></div>
         </div>
       </div>
     </div>
 
-    <!-- 8 · MP4 vs DECK (hotspot a la rama) -->
-    <div id="s-mp4-vs-deck" class="scene" data-composition-id="mp4-vs-deck"
-         data-start="86" data-duration="16" data-label="MP4 vs deck"
-         data-width="1920" data-height="1080">
+    <!-- 4 · IDENTIDAD VISUAL (2 fragmentos) -->
+    <div id="s-identidad" class="scene" data-composition-id="identidad" data-start="30" data-duration="12"
+         data-label="Identidad visual" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>La trampa</div>
-        <h2 data-anim style="margin-top:30px; max-width:1600px">
-          Un slideshow <span style="color:var(--warn)">no</span> se renderiza a MP4: se presenta vivo
-        </h2>
-        <div class="warnbox" data-anim style="margin-top:52px">
-          <div class="wt">⚠ ADVERTENCIA</div>
-          <p>
-            <span class="mono">render</span> resuelve solo la <strong>primera</strong> composición y escribe un MP4
-            <strong>truncado sin avisar</strong>. Te podés llevar 6 segundos de un deck de 40.
+        <div class="kicker" data-anim>Oficio · paso 1</div>
+        <h2 data-anim style="margin-top:28px; max-width:1560px">La identidad va antes del markup</h2>
+        <div class="card" data-anim style="margin-top:48px; max-width:1500px">
+          <p style="font-size:42px; color:var(--ink)">
+            Ningún componente arranca sin saber qué paleta y qué tipografía usa.
+            <strong class="teal">Si podés escribir <span class="mono">#333</span>, <span class="mono">Roboto</span>
+            o <span class="mono">#3b82f6</span>, te saltaste este paso.</strong>
           </p>
         </div>
-        <p class="sm" data-anim style="margin-top:44px">
-          La salida correcta es <span class="mono accent">npx hyperframes present</span>.
-          ¿Querés ver el catálogo? Tocá el hotspot.
+        <p class="sm frag" id="f-iden-1" style="margin-top:38px; max-width:1480px">
+          <strong style="color:var(--ink)">Tres preguntas</strong> antes de escribir nada:
+          ¿qué clima? ¿fondo claro u oscuro? ¿hay colores de marca?
+        </p>
+        <p class="sm frag" id="f-iden-2" style="margin-top:24px; max-width:1480px">
+          <strong style="color:var(--ink)">Por qué importa:</strong> cada bloque del catálogo trae su
+          propia paleta. Sin identidad declarada, la deck se ve armada con piezas sueltas.
         </p>
       </div>
     </div>
 
-    <!-- 9 · ANATOMÍA (2 fragmentos) -->
-    <div id="s-anatomia" class="scene" data-composition-id="anatomia"
-         data-start="102" data-duration="18" data-label="Anatomía del deck"
-         data-width="1920" data-height="1080">
+    <!-- 5 · LAYOUT ANTES DE ANIMACIÓN (2 fragmentos) -->
+    <div id="s-layout" class="scene" data-composition-id="layout" data-start="42" data-duration="12"
+         data-label="Layout antes de animación" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Anatomía de un deck</div>
-        <h2 data-anim style="margin-top:30px; max-width:1600px">
-          Una isla JSON declara slides, reveals, ramas y notas
-        </h2>
-        <div class="code" data-anim style="margin-top:48px">
-          &lt;script <span class="a">type</span>="application/hyperframes-slideshow+json"&gt;<br />
-          &nbsp;&nbsp;{ "slides": [ { "sceneId": <span class="t">"portada"</span>, "notes": <span class="t">"…"</span> } ],<br />
-          &nbsp;&nbsp;&nbsp;"slideSequences": [ … ] }<br />
-          &lt;/script&gt;
+        <div class="kicker" data-anim>Oficio · paso 2</div>
+        <h2 data-anim style="margin-top:28px; max-width:1560px">Definí el layout <span class="teal">antes</span> que la animación</h2>
+        <div class="two" data-anim style="margin-top:48px">
+          <div class="card" style="border-color:var(--rose)">
+            <h3 class="rose">El error caro</h3>
+            <p>Posicionás elementos en su estado inicial y los animás hacia donde creés que terminan. Ahí estás adivinando el layout final.</p>
+          </div>
+          <div class="card" style="border-color:var(--teal)">
+            <h3 class="teal">El método</h3>
+            <p>Escribí primero el frame más visible como CSS estático. La posición CSS es la verdad; el tween describe el viaje.</p>
+          </div>
         </div>
-        <p class="sm frag" id="f-anatomia-1" style="margin-top:40px">
-          <span class="mono accent">notes</span> las ve el presentador. Nunca aparecen en la audiencia.
+        <p class="sm frag" id="f-lay-1" style="margin-top:38px; max-width:1480px">
+          <strong style="color:var(--ink)">La consecuencia:</strong> los solapamientos son invisibles
+          hasta que renderizás. Un titular arriba de otro, una métrica sobre una etiqueta.
         </p>
-        <p class="sm frag" id="f-anatomia-2" style="margin-top:24px">
-          Se presenta con <span class="mono accent">npx hyperframes present</span>. La tecla <span class="mono">P</span> abre el modo presentador.
+        <p class="sm frag" id="f-lay-2" style="margin-top:24px; max-width:1480px">
+          <strong style="color:var(--ink)">La técnica:</strong> un contenedor que llene la escena con
+          <span class="mono teal">padding</span> para posicionar y flex con <span class="mono teal">gap</span> para espaciar.
+          Nunca <span class="mono">top</span> y <span class="mono">left</span> absolutos en el contenido.
         </p>
       </div>
     </div>
 
-    <!-- 10 · VALIDACIÓN -->
-    <div id="s-validacion" class="scene" data-composition-id="validacion"
-         data-start="120" data-duration="12" data-label="Validación"
-         data-width="1920" data-height="1080">
+    <!-- 6 · MAPA DEL CATÁLOGO -->
+    <div id="s-mapa" class="scene" data-composition-id="catalogo-mapa" data-start="54" data-duration="12"
+         data-label="Mapa del catálogo" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Validación</div>
-        <h2 data-anim style="margin-top:30px; max-width:1560px">
-          <span class="mono accent">check</span> antes de render: el lint atrapa islas rotas
-        </h2>
-        <div class="cards" data-anim style="margin-top:56px">
+        <div class="kicker" data-anim>Oficio · paso 3</div>
+        <h2 data-anim style="margin-top:28px; max-width:1520px">Seis familias de componentes. Tocá el hotspot para el inventario.</h2>
+        <div class="cards2" data-anim style="margin-top:48px; display:grid; grid-template-columns:repeat(3,1fr); gap:28px">
+          <div class="card" style="padding:32px 34px"><h3 class="teal" style="font-size:40px">Datos</h3>
+            <p style="font-size:38px">data-chart · bar-chart-race · chart-story</p></div>
+          <div class="card" style="padding:32px 34px"><h3 class="violet" style="font-size:40px">Procesos</h3>
+            <p style="font-size:38px">flowchart · onboarding-stepper-flow</p></div>
+          <div class="card" style="padding:32px 34px"><h3 style="font-size:40px">Interfaces</h3>
+            <p style="font-size:38px">browser-device-stage · multi-device-splay</p></div>
+          <div class="card" style="padding:32px 34px"><h3 class="amber" style="font-size:40px">Código</h3>
+            <p style="font-size:38px">code-terminal-run · code-highlight</p></div>
+          <div class="card" style="padding:32px 34px"><h3 class="green" style="font-size:40px">Geografía</h3>
+            <p style="font-size:38px">world-map · us-map-bubble · us-map-flow</p></div>
+          <div class="card" style="padding:32px 34px"><h3 class="rose" style="font-size:40px">Énfasis</h3>
+            <p style="font-size:38px">caption-highlight · titlecard-calm</p></div>
+        </div>
+        <p class="sm frag" id="f-mapa" style="margin-top:40px">
+          <strong class="amber">Regla:</strong> buscá antes de construir a mano. Un bloque real le gana
+          siempre a la aproximación.
+        </p>
+      </div>
+    </div>
+
+    <!-- 7 · COMPONENTE: GRÁFICO -->
+    <div id="s-chart" class="scene" data-composition-id="ej-chart" data-start="66" data-duration="13"
+         data-label="Ejemplo: gráfico" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column">
+        <div class="kicker" data-anim>Ejemplo 1 · data-chart</div>
+        <h2 data-anim style="margin-top:24px; max-width:1500px">Si la slide afirma una magnitud, mostrala</h2>
+        <div style="display:grid; grid-template-columns:1.15fr .85fr; gap:60px; align-items:center; flex:1; margin-top:24px">
+          <div class="card" data-anim style="padding:36px 40px">
+            <div class="chart">
+              <div class="col"><span class="bval">41%</span>
+                <div class="bar" data-h="38" style="height:144px;background:linear-gradient(180deg,var(--teal),#2dd4bf)"></div>
+                <span class="blab">2024</span></div>
+              <div class="col"><span class="bval">52%</span>
+                <div class="bar" data-h="51" style="height:194px;background:linear-gradient(180deg,var(--teal),#2dd4bf)"></div>
+                <span class="blab">2025</span></div>
+              <div class="col"><span class="bval">68%</span>
+                <div class="bar" data-h="64" style="height:243px;background:linear-gradient(180deg,var(--violet),#8b5cf6)"></div>
+                <span class="blab">2026</span></div>
+              <div class="col"><span class="bval" style="color:var(--violet)">79%</span>
+                <div class="bar" data-h="75" style="height:285px;background:linear-gradient(180deg,var(--violet),#7c3aed)"></div>
+                <span class="blab">2027</span></div>
+            </div>
+          </div>
+          <div data-anim>
+            <p class="sm" style="margin-bottom:26px">
+              <span class="dim mono">❌</span> "El churn bajó 40%" y nada más.
+              Afirmación sin evidencia.
+            </p>
+            <p class="sm">
+              <span class="teal mono">✅</span> La misma afirmación con el gráfico al lado.
+              Ahora se <strong style="color:var(--ink)">demuestra</strong>.
+            </p>
+            <p class="sm frag" id="f-chart" style="margin-top:32px; color:var(--ink3)">
+              Nombrá el bloque en el prompt: <span class="mono teal">data-chart</span>. El agente lo adapta
+              con tus datos.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8 · COMPONENTE: TERMINAL -->
+    <div id="s-term" class="scene" data-composition-id="ej-terminal" data-start="79" data-duration="13"
+         data-label="Ejemplo: terminal" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Ejemplo 2 · code-terminal-run</div>
+        <h2 data-anim style="margin-top:24px; max-width:1520px">Si la slide muestra código, no lo escribas: terminalizalo</h2>
+        <div class="term" data-anim style="margin-top:44px; max-width:1300px">
+          <div class="term-bar">
+            <span class="dot" style="background:#ff5f57"></span>
+            <span class="dot" style="background:#febc2e"></span>
+            <span class="dot" style="background:#28c840"></span>
+            <span class="mono" style="font-size:36px; color:var(--ink3); margin-left:14px">zsh — deploy</span>
+          </div>
+          <div class="term-body">
+            <div><span class="teal">$</span> hyperframes check composition</div>
+            <div style="color:var(--ink3)">0 errors, 1 warning, 0 info</div>
+            <div style="color:var(--ink3)">30/30 text checks pass WCAG AA</div>
+            <div style="margin-top:14px"><span class="teal">$</span> <span style="color:var(--ink)">npx hyperframes render</span><span class="caret"></span></div>
+          </div>
+        </div>
+        <p class="sm" data-anim style="margin-top:40px; max-width:1440px">
+          <strong style="color:var(--teal)">Por qué el bloque y no texto a mano:</strong> es determinista.
+          Se reproduce idéntico en cada render. Escribir código con animaciones improvisadas es la vía
+          más corta a un video que cambia en cada corrida.
+        </p>
+      </div>
+    </div>
+
+    <!-- 9 · COMPONENTE: MOCKUP -->
+    <div id="s-mockup" class="scene" data-composition-id="ej-mockup" data-start="92" data-duration="13"
+         data-label="Ejemplo: mockup" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Ejemplo 3 · browser-device-stage</div>
+        <h2 data-anim style="margin-top:24px; max-width:1540px">Si mostrás tu interfaz, mostrala de verdad</h2>
+        <div class="browser" data-anim style="margin-top:40px; max-width:1340px">
+          <div class="bbar">
+            <span class="dot" style="background:#ff5f57"></span>
+            <span class="dot" style="background:#febc2e"></span>
+            <span class="dot" style="background:#28c840"></span>
+            <span class="url">app.ejemplo.com/agenda</span>
+          </div>
+          <div class="bbody">
+            <div class="skel" style="width:52%; height:26px; background:var(--surface2)"></div>
+            <div class="skel" style="width:88%"></div>
+            <div class="skel" style="width:74%"></div>
+            <div class="btn">Agendar reunión</div>
+          </div>
+        </div>
+        <p class="sm frag" id="f-mock" style="margin-top:38px; max-width:1460px">
+          <strong style="color:var(--amber)">Trampa:</strong> usá <span class="mono">contain</span> para capturas
+          con texto legible. El <span class="mono">cover</span> por defecto recorta logos y captions, y eso es
+          un bug, no una decisión de diseño.
+        </p>
+      </div>
+    </div>
+
+    <!-- 10 · COMPONENTE: ÉNFASIS -->
+    <div id="s-mark" class="scene" data-composition-id="ej-destacado" data-start="105" data-duration="13"
+         data-label="Ejemplo: énfasis" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Ejemplo 4 · caption-highlight</div>
+        <h2 data-anim style="margin-top:24px; max-width:1520px">Este es el reemplazo correcto de la animación decorativa</h2>
+        <div class="card" data-anim style="margin-top:48px; max-width:1460px; padding:52px 54px">
+          <p class="phrase">El texto ya está. <span class="mark">Una palabra</span> se enciende.</p>
+        </div>
+        <div class="two" data-anim style="margin-top:44px">
+          <div class="card" style="border-color:var(--rose)">
+            <h3 class="rose">❌ Lo que sobra</h3>
+            <p>El texto entra con rebote. La audiencia lo lee dos veces y no entiende más.</p>
+          </div>
+          <div class="card" style="border-color:var(--teal)">
+            <h3 class="teal">✅ Lo que aporta</h3>
+            <p>El texto ya estaba y una palabra se enciende. La audiencia sabe dónde mirar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11 · EL ESQUELETO -->
+    <div id="s-esq" class="scene" data-composition-id="esqueleto" data-start="118" data-duration="13"
+         data-label="El esqueleto" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>El motor</div>
+        <h2 data-anim style="margin-top:28px; max-width:1500px">Seis partes. Cada una cierra una decisión mal resuelta.</h2>
+        <div class="rows" data-anim style="margin-top:44px">
+          <div class="row"><span class="k">ruta</span><span class="v">Qué workflow carga las reglas correctas.</span></div>
+          <div class="row"><span class="k">spec</span><span class="v">Duración y resolución, arriba. Defaults: 1920×1080.</span></div>
+          <div class="row"><span class="k">beats</span><span class="v">Qué pasa en cada momento, con timestamps.</span></div>
+          <div class="row" style="border-color:var(--teal)"><span class="k teal">copy</span><span class="v">El texto exacto, entre comillas. Sin comillas, se parafrasea.</span></div>
+          <div class="row" style="border-color:var(--teal)"><span class="k teal">technique</span><span class="v">Qué bloque del catálogo adaptar. Acá nombrás el componente.</span></div>
+          <div class="row" style="border-color:var(--teal)"><span class="k teal">negatives</span><span class="v">Lo que no querés, dicho sin ambigüedad.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12 · DECK O VIDEO -->
+    <div id="s-routing" class="scene" data-composition-id="deck-o-video" data-start="131" data-duration="12"
+         data-label="Deck o video" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>La decisión que va primero</div>
+        <h2 data-anim style="margin-top:28px; max-width:1520px">Deck o video. No es lo mismo con otro nombre.</h2>
+        <div class="two" data-anim style="margin-top:52px">
+          <div class="card" style="border-color:var(--teal)">
+            <h3 class="teal">Deck · slideshow</h3>
+            <p style="margin-bottom:14px">Lo presentás vos, con el teclado. Notas que la audiencia no ve, detalle opcional con hotspots, modo presentador.</p>
+            <p class="mono" style="font-size:38px; color:var(--teal)">npx hyperframes present</p>
+            <p style="margin-top:14px; color:var(--amber)">No se renderiza a MP4. Si lo hacés, te da un archivo truncado sin avisar.</p>
+          </div>
           <div class="card">
-            <h3>01</h3>
-            <p>Cada <span class="mono">sceneId</span> resuelve a una escena real.</p>
-          </div>
-          <div class="card">
-            <h3>02</h3>
-            <p>Cada <span class="mono">hotspot.target</span> apunta a una secuencia definida.</p>
-          </div>
-          <div class="card">
-            <h3>03</h3>
-            <p>Los fragmentos caen dentro del rango del slide.</p>
-          </div>
-          <div class="card">
-            <h3>04</h3>
-            <p>Ningún slide principal se solapa en el tiempo.</p>
+            <h3 class="violet">Video</h3>
+            <p style="margin-bottom:14px">Se mira solo, el reloj avanza. Para difusión, redes y documentación.</p>
+            <p class="mono" style="font-size:38px; color:var(--violet)">npx hyperframes render</p>
+            <p style="margin-top:14px">Si alguien tiene que mirarlo sin que vos estés, es video.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 11 · CIERRE -->
-    <div id="s-cierre" class="scene" data-composition-id="cierre"
-         data-start="132" data-duration="12" data-label="Cierre"
-         data-width="1920" data-height="1080">
+    <!-- 13 · ARQUITECTURA -->
+    <div id="s-arq" class="scene" data-composition-id="arquitectura" data-start="143" data-duration="12"
+         data-label="Arquitectura" data-width="1920" data-height="1080">
       <div class="grid"></div>
-      <div class="glow" style="background:#5eead4; top:-200px; right:-200px"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Empezá</div>
-        <h2 data-anim style="margin-top:30px; max-width:1600px">
-          Pedile <span class="accent">10 segundos</span>. Después iterá.
-        </h2>
-        <div class="code" data-anim style="margin-top:52px; max-width:1360px">
-          <span class="t">npx hyperframes init</span> mi-video<br />
-          <span class="c">#Usando /hyperframes, hacé un intro de 10s</span>
+        <div class="kicker" data-anim>Sección técnica</div>
+        <h2 data-anim style="margin-top:28px; max-width:1540px">El motor no reproduce la línea de tiempo. <span class="teal">La posiciona.</span></h2>
+        <p class="sm" data-anim style="margin-top:36px; max-width:1480px">
+          Ese es el concepto que sostiene todo. Para saltar al frame 1450 y saber el estado del DOM,
+          la animación tiene que ser <strong style="color:var(--ink)">buscable</strong>. Por eso las
+          líneas de tiempo van pausadas, las inserciones son absolutas, y no puede haber aleatoriedad.
+        </p>
+        <div class="card" data-anim style="margin-top:38px; max-width:1420px; border-color:var(--amber)">
+          <p style="color:var(--ink)">El síntoma de romperlo es característico:
+          <strong class="amber">el preview se ve bien y el render sale mal</strong>, con saltos o
+          cuadros fuera de lugar.</p>
         </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1400px">
-          Un primer video corto revela más que toda esta presentación.
+        <p class="sm frag" id="f-arq" style="margin-top:34px; color:var(--ink3)">
+          Detalle completo, trade-offs y el veredicto sobre el skill de terceros: parte 6 y 7 del curso.
         </p>
       </div>
     </div>
 
-    <!-- RAMA · B1 catálogo -->
-    <div id="s-catalogo" class="scene" data-composition-id="catalogo"
-         data-start="144" data-duration="12" data-label="Catálogo"
-         data-width="1920" data-height="1080">
+    <!-- 14 · CIERRE -->
+    <div id="s-cierre" class="scene" data-composition-id="cierre" data-start="155" data-duration="12"
+         data-label="Cierre" data-width="1920" data-height="1080">
       <div class="grid"></div>
-      <div class="glow" style="background:#a78bfa; bottom:-280px; left:-160px"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Rama · catálogo</div>
-        <h2 data-anim style="margin-top:30px; max-width:1600px">
-          Hay unos <span class="accent2">400 bloques</span> listos para instalar por nombre
+        <div class="kicker" data-anim>Para llevarse</div>
+        <h2 data-anim style="margin-top:28px; max-width:1540px">
+          Identidad antes del markup. <span class="teal">Layout antes de la animación.</span>
         </h2>
-        <div class="code" data-anim style="margin-top:52px">
-          <span class="c"># buscar primero, construir a mano después</span><br />
-          <span class="t">npx hyperframes catalog --query</span> <span class="a">"terminal"</span> --json<br />
-          <span class="t">npx hyperframes add</span> code-terminal-run
-        </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
-          La búsqueda funciona sin proyecto, sin cuenta y sin instalar nada.
+        <p class="lead" data-anim style="margin-top:34px; max-width:1400px">
+          Y una regla sola que resume todo: <strong style="color:var(--ink)">si el visual no prueba lo que
+          el texto dice, sobra el visual.</strong>
         </p>
+        <div class="card" data-anim style="margin-top:44px; max-width:1400px">
+          <h3 class="teal">22 prompts copiables</h3>
+          <p>12 de slides y 10 de video, en seis escenarios con dos tonos cada uno. Partes 3 y 4 del curso.</p>
+        </div>
       </div>
     </div>
 
-    <!-- RAMA · B2 bloques -->
-    <div id="s-bloques" class="scene" data-composition-id="bloques"
-         data-start="156" data-duration="12" data-label="Regla de bloques"
-         data-width="1920" data-height="1080">
+    <!-- RAMA · INV-1 -->
+    <div id="s-inv1" class="scene" data-composition-id="inv-1" data-start="167" data-duration="14"
+         data-label="Inventario" data-width="1920" data-height="1080">
       <div class="grid"></div>
       <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
-        <div class="kicker" data-anim>Rama · regla operativa</div>
-        <h2 data-anim style="margin-top:30px; max-width:1620px">
-          Antes de dibujar cualquier visual nombrado, <span class="accent">buscalo</span>
-        </h2>
-        <div class="rows" style="margin-top:48px">
-          <div class="row" data-anim>
-            <span class="in">data-chart · animated-bar-chart</span><span class="ar">→</span><span class="out">gráficos</span>
+        <div class="kicker" data-anim>Rama · inventario</div>
+        <h2 data-anim style="margin-top:26px; max-width:1500px">Los nombres exactos importan</h2>
+        <div class="two" data-anim style="margin-top:42px">
+          <div class="card">
+            <h3 class="teal">Datos y procesos</h3>
+            <p class="mono" style="font-size:38px">data-chart · animated-bar-chart · bar-chart-race · chart-story · flowchart · onboarding-stepper-flow</p>
           </div>
-          <div class="row" data-anim>
-            <span class="in">terminal-simulator · code-typing</span><span class="ar">→</span><span class="out">código</span>
+          <div class="card">
+            <h3 class="violet">Interfaz y código</h3>
+            <p class="mono" style="font-size:38px">browser-device-stage · device-frame-stage · multi-device-splay · code-terminal-run · code-highlight · code-typing</p>
           </div>
-          <div class="row" data-anim>
-            <span class="in">titlecard-calm · canopy-part-title</span><span class="ar">→</span><span class="out">títulos</span>
+          <div class="card">
+            <h3 class="amber">Geografía</h3>
+            <p class="mono" style="font-size:38px">world-map · us-map-bubble · us-map-flow</p>
+          </div>
+          <div class="card">
+            <h3 class="rose">Énfasis y portadas</h3>
+            <p class="mono" style="font-size:38px">caption-highlight · titlecard-calm · canopy-part-title · glass-hero</p>
           </div>
         </div>
-        <p class="sm" data-anim style="margin-top:44px; max-width:1440px">
-          Un bloque real le gana siempre a la aproximación hecha a mano.
+      </div>
+    </div>
+
+    <!-- RAMA · INV-2 -->
+    <div id="s-inv2" class="scene" data-composition-id="inv-2" data-start="181" data-duration="14"
+         data-label="Cuándo construir a mano" data-width="1920" data-height="1080">
+      <div class="grid"></div>
+      <div class="pad" style="display:flex; flex-direction:column; justify-content:center">
+        <div class="kicker" data-anim>Rama · criterio</div>
+        <h2 data-anim style="margin-top:26px; max-width:1500px">Tres casos donde conviene construir a mano</h2>
+        <div class="rows" data-anim style="margin-top:46px">
+          <div class="row"><span class="k teal">01</span><span class="v">Tu propio diagrama: arquitectura interna, organigrama, flujo de negocio. Ningún bloque genérico lo va a representar con precisión.</span></div>
+          <div class="row"><span class="k teal">02</span><span class="v">Una replicación de referencia: el bloque más cercano va a ser una aproximación, y una aproximación se nota.</span></div>
+          <div class="row"><span class="k teal">03</span><span class="v">Una composición tipográfica muy particular. No la fuerces dentro de un bloque.</span></div>
+        </div>
+        <p class="sm frag" id="f-inv" style="margin-top:44px; max-width:1460px">
+          <strong class="amber">Todo lo demás: buscá primero.</strong> La búsqueda no necesita proyecto,
+          ni cuenta, ni instalación.
         </p>
       </div>
     </div>
 
     <div id="progress"><span></span></div>
-    <div id="pct">00 / 13</div>
+    <div id="pct">00%</div>
 
     <script>
       (function () {
         window.__timelines = window.__timelines || {};
-
-        // Root timeline: fija el rango seekeable y aporta movimiento real
-        // (la barra de progreso), así el lint no marca "nada se movió".
-        // Se registra bajo un data-composition-id existente a propósito: el
-        // contrato de slideshow prohíbe una composición master-root, porque
-        // `render` la resolvería y emitiría el deck entero en lineal.
-        var TOTAL = 168;
+        var TOTAL = 195;
         var root = gsap.timeline({ paused: true });
         root.fromTo("#progress span", { scaleX: 0 }, { scaleX: 1, duration: TOTAL, ease: "none" }, 0);
-        // Movimiento seekable dentro de la portada: termina antes del frame de
-        // descanso (t=4.5), así el sweep del lint ve cambio real bajo seek.
         root.fromTo("#portada-rule", { scaleX: 0 }, { scaleX: 1, duration: 2.2, ease: "power2.out" }, 0.4);
         window.__timelines["portada"] = root;
       })();
@@ -493,73 +540,51 @@
     <script>
       (function () {
         var SCENES = [
-          { id: "s-portada",     cid: "portada",     start: 0,   end: 9   },
-          { id: "s-que-es",      cid: "que-es",      start: 9,   end: 19  },
-          { id: "s-determinismo",cid: "determinismo",start: 19,  end: 29  },
-          { id: "s-instalacion", cid: "instalacion", start: 29,  end: 41  },
-          { id: "s-contrato",    cid: "contrato",    start: 41,  end: 57  },
-          { id: "s-gsap",        cid: "gsap",        start: 57,  end: 70  },
-          { id: "s-routing",     cid: "routing",     start: 70,  end: 86  },
-          { id: "s-mp4-vs-deck", cid: "mp4-vs-deck", start: 86,  end: 102 },
-          { id: "s-anatomia",    cid: "anatomia",    start: 102, end: 120 },
-          { id: "s-validacion",  cid: "validacion",  start: 120, end: 132 },
-          { id: "s-cierre",      cid: "cierre",      start: 132, end: 144 },
-          { id: "s-catalogo",    cid: "catalogo",    start: 144, end: 156 },
-          { id: "s-bloques",     cid: "bloques",     start: 156, end: 168 }
+          { id: "s-portada", start: 0, end: 9 }, { id: "s-error", start: 9, end: 19 },
+          { id: "s-circuito", start: 19, end: 30 }, { id: "s-identidad", start: 30, end: 42 },
+          { id: "s-layout", start: 42, end: 54 }, { id: "s-mapa", start: 54, end: 66 },
+          { id: "s-chart", start: 66, end: 79 }, { id: "s-term", start: 79, end: 92 },
+          { id: "s-mockup", start: 92, end: 105 }, { id: "s-mark", start: 105, end: 118 },
+          { id: "s-esq", start: 118, end: 131 }, { id: "s-routing", start: 131, end: 143 },
+          { id: "s-arq", start: 143, end: 155 }, { id: "s-cierre", start: 155, end: 167 },
+          { id: "s-inv1", start: 167, end: 181 }, { id: "s-inv2", start: 181, end: 195 }
         ];
-
-        // Fragmentos: tiempos absolutos del timeline de composición.
         var FRAGMENTS = [
-          { time: 44.4, id: "f-contrato-1" },
-          { time: 45.0, id: "f-contrato-2" },
-          { time: 73.4, id: "f-routing-1" },
-          { time: 74.3, id: "f-routing-2" },
-          { time: 75.2, id: "f-routing-3" },
-          { time: 105.4, id: "f-anatomia-1" },
-          { time: 106.3, id: "f-anatomia-2" }
+          { time: 33.4, id: "f-iden-1" }, { time: 34.1, id: "f-iden-2" },
+          { time: 45.4, id: "f-lay-1" }, { time: 46.2, id: "f-lay-2" },
+          { time: 61.5, id: "f-mapa" }, { time: 74.5, id: "f-chart" },
+          { time: 102.5, id: "f-mock" }, { time: 152.5, id: "f-arq" },
+          { time: 190.5, id: "f-inv" }
         ];
-
         var lastActive = null;
 
         function fireEntrance(sceneEl) {
           var els = sceneEl.querySelectorAll("[data-anim]");
           if (!els.length) return;
-          gsap.from(els, {
-            opacity: 0, y: 26, duration: 0.42, stagger: 0.06,
-            ease: "power2.out", overwrite: true
-          });
+          gsap.from(els, { opacity: 0, y: 24, duration: 0.42, stagger: 0.055,
+            ease: "power2.out", overwrite: true });
         }
-
         function reveal(id) {
           var el = document.getElementById(id);
           if (!el) return;
-          gsap.fromTo(el,
-            { opacity: 0, x: -22 },
+          gsap.fromTo(el, { opacity: 0, x: -20 },
             { opacity: 1, x: 0, duration: 0.34, ease: "power2.out", overwrite: true });
         }
-
         function sceneAt(t) {
-          for (var i = 0; i < SCENES.length; i++) {
-            if (t >= SCENES[i].start && t < SCENES[i].end) return SCENES[i];
-          }
+          for (var i = 0; i < SCENES.length; i++) if (t >= SCENES[i].start && t < SCENES[i].end) return SCENES[i];
           return SCENES[0];
         }
-
-        function ownerSceneOf(fragId) {
-          for (var i = 0; i < SCENES.length; i++) {
-            if (document.getElementById(fragId) &&
-                document.getElementById(fragId).closest(".scene") === document.getElementById(SCENES[i].id)) {
-              return SCENES[i];
-            }
-          }
+        function ownerOf(fragId) {
+          var node = document.getElementById(fragId);
+          if (!node) return null;
+          var scene = node.closest(".scene");
+          for (var i = 0; i < SCENES.length; i++) if (SCENES[i].id === scene.id) return SCENES[i];
           return null;
         }
-
         function updateVisibility(t) {
           var active = sceneAt(t);
-          var pct = Math.min(100, Math.round((t / 168) * 100));
-          var el = document.getElementById("pct");
-          if (el) el.textContent = (t < 168 ? Math.floor(t) : 168) + "s · " + pct + "%";
+          var bar = document.getElementById("pct");
+          if (bar) bar.textContent = Math.min(100, Math.round((t / 195) * 100)) + "%";
 
           for (var i = 0; i < SCENES.length; i++) {
             var s = SCENES[i];
@@ -570,77 +595,66 @@
             node.style.opacity = on ? "1" : "0";
             node.style.visibility = on ? "visible" : "hidden";
             node.style.pointerEvents = on ? "auto" : "none";
-
-            // Al salir de una escena con fragmentos, se reinician para
-            // que al volver el deck muestre el estado inicial.
             if (!on && lastActive === s.id) {
               for (var f = 0; f < FRAGMENTS.length; f++) {
-                if (ownerSceneOf(FRAGMENTS[f].id) === s) {
+                if (ownerOf(FRAGMENTS[f].id) === s) {
                   var fe = document.getElementById(FRAGMENTS[f].id);
                   if (fe) { fe.dataset.shown = "0"; gsap.set(fe, { opacity: 0, x: 0 }); }
                 }
               }
             }
           }
-
-          // Revelado por cruce del playhead (sin engine no hay tweens seek).
           for (var j = 0; j < FRAGMENTS.length; j++) {
             var fr = FRAGMENTS[j];
             if (t >= fr.time) {
-              var node2 = document.getElementById(fr.id);
-              if (node2 && node2.dataset.shown !== "1") {
-                node2.dataset.shown = "1";
-                reveal(fr.id);
-              }
+              var n2 = document.getElementById(fr.id);
+              if (n2 && n2.dataset.shown !== "1") { n2.dataset.shown = "1"; reveal(fr.id); }
             }
           }
-
           if (active.id !== lastActive) {
-            var activeNode = document.getElementById(active.id);
-            if (activeNode) fireEntrance(activeNode);
+            var an = document.getElementById(active.id);
+            if (an) fireEntrance(an);
+            if (active.id === "s-chart") growBars();
             lastActive = active.id;
           }
         }
-
         window.__hfSetTime = updateVisibility;
         updateVisibility(0);
 
-        var root = window.__timelines && window.__timelines["portada"];
-        if (root) {
-          root.eventCallback("onUpdate", function () { updateVisibility(root.time()); });
+        // Las barras del gráfico crecen al entrar en su slide.
+        // El barrido del mark se hace con una clase, porque GSAP no puede
+        // animar pseudo-elementos directamente.
+        var barsDone = false;
+        function growBars() {
+          if (barsDone) return;
+          barsDone = true;
+          gsap.to(".bar", { scaleY: 1, duration: 0.9, stagger: 0.12, ease: "power3.out" });
+          document.querySelectorAll(".mark").forEach(function (m) { m.classList.add("on"); });
         }
+        window.__hfGrowBars = growBars;
+
+        var root = window.__timelines && window.__timelines["portada"];
+        if (root) root.eventCallback("onUpdate", function () { updateVisibility(root.time()); });
       })();
     </script>
 
     <script>
-      // El componente slideshow necesita el rango de cada escena para poder
-      // saltar a ella. Sin engine hay que postearlo a mano —TODAS, incluida
-      // la rama, o el hotspot entra a una slide en blanco.
       (function () {
         var FPS = 30;
         var scenes = [
-          { id: "portada",     start: 0,   duration: 9  },
-          { id: "que-es",      start: 9,   duration: 10 },
-          { id: "determinismo",start: 19,  duration: 10 },
-          { id: "instalacion", start: 29,  duration: 12 },
-          { id: "contrato",    start: 41,  duration: 16 },
-          { id: "gsap",        start: 57,  duration: 13 },
-          { id: "routing",     start: 70,  duration: 16 },
-          { id: "mp4-vs-deck", start: 86,  duration: 16 },
-          { id: "anatomia",    start: 102, duration: 18 },
-          { id: "validacion",  start: 120, duration: 12 },
-          { id: "cierre",      start: 132, duration: 12 },
-          { id: "catalogo",    start: 144, duration: 12 },
-          { id: "bloques",     start: 156, duration: 12 }
+          { id: "portada", start: 0, duration: 9 }, { id: "error-comun", start: 9, duration: 10 },
+          { id: "circuito", start: 19, duration: 11 }, { id: "identidad", start: 30, duration: 12 },
+          { id: "layout", start: 42, duration: 12 }, { id: "catalogo-mapa", start: 54, duration: 12 },
+          { id: "ej-chart", start: 66, duration: 13 }, { id: "ej-terminal", start: 79, duration: 13 },
+          { id: "ej-mockup", start: 92, duration: 13 }, { id: "ej-destacado", start: 105, duration: 13 },
+          { id: "esqueleto", start: 118, duration: 13 }, { id: "deck-o-video", start: 131, duration: 12 },
+          { id: "arquitectura", start: 143, duration: 12 }, { id: "cierre", start: 155, duration: 12 },
+          { id: "inv-1", start: 167, duration: 14 }, { id: "inv-2", start: 181, duration: 14 }
         ];
         function post() {
           try {
-            parent.postMessage({
-              source: "hf-preview",
-              type: "timeline",
-              durationInFrames: 168 * FPS,
-              scenes: scenes
-            }, "*");
+            parent.postMessage({ source: "hf-preview", type: "timeline",
+              durationInFrames: 195 * FPS, scenes: scenes }, "*");
           } catch (e) {}
         }
         if (document.readyState === "complete") setTimeout(post, 300);
