@@ -3,9 +3,12 @@ import { glob, type Loader, type LoaderContext } from 'astro/loaders';
 import yaml from 'yaml';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const RESOURCES_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../resources');
+// glob() resolves `base` with `new URL(base, root)`, which misparses an absolute
+// Windows path ("C:\...") as the scheme "c:". Hand it a file URL instead.
+const RESOURCES_BASE = pathToFileURL(RESOURCES_DIR).href;
 
 /**
  * Custom loader: one entry per resources/<id>/resource.yaml.
@@ -30,7 +33,7 @@ function resourceManifestLoader(): Loader {
 }
 
 const slides = defineCollection({
-  loader: glob({ pattern: '**/slides/*.md', base: RESOURCES_DIR }),
+  loader: glob({ pattern: '**/slides/*.md', base: RESOURCES_BASE }),
   schema: z.object({
     kicker: z.string().optional(),
     kind: z.enum(['cover', 'center', 'content']).default('content'),
@@ -39,7 +42,7 @@ const slides = defineCollection({
 });
 
 const parts = defineCollection({
-  loader: glob({ pattern: '*/*/index.md', base: RESOURCES_DIR }),
+  loader: glob({ pattern: '*/*/index.md', base: RESOURCES_BASE }),
   schema: z.object({
     title: z.string(),
     summary: z.string().optional(),
